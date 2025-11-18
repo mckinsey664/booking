@@ -27,9 +27,13 @@ mail = Mail(app)
 
 ######################## GOOGLE SHEETS INTEGRATION #########################
 # ---- Google Sheets setup ----
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
-CREDS = Credentials.from_service_account_file("service_account.json", scopes=SCOPES)
+
+import json, os
+
+creds_json = json.loads(os.environ["GOOGLE_CREDS"])
+CREDS = Credentials.from_service_account_info(creds_json, scopes=SCOPES)
 gc = gspread.authorize(CREDS)
+
 
 SHEET_ID = "16gIa4CoAbnNhlQrqL1xu21VwmAnrqFaQ7KThpxmz8xs"  # part after /d/ and before /edit in the sheet URL
 SHEET_NAME = "DSS Form Test 2"            # change if your tab is named differently
