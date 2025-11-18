@@ -1,0 +1,56 @@
+{% extends "admin_dashboard.html" %}
+
+{% block content %}
+<h2 class="mb-4">Manage Rooms</h2>
+
+<!-- ✅ Flash messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} text-center mb-3">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<!-- 🏠 Add Room Form -->
+<div class="card bg-dark border-0 p-4 mb-4">
+  <form method="POST" class="row g-2 align-items-center">
+    <div class="col-md-8">
+      <input type="text" name="name" class="form-control" placeholder="Enter Room Name" required>
+    </div>
+    <div class="col-md-4 text-end">
+      <button class="btn btn-brand text-white w-100">➕ Add Room</button>
+    </div>
+  </form>
+</div>
+
+<!-- 🧾 Existing Rooms List -->
+<h4 class="mb-3 text-white-50">Existing Rooms</h4>
+
+{% if rooms %}
+  <div class="table-responsive">
+    <table class="table table-dark table-striped table-hover align-middle">
+      <thead style="background-color:#CF6000; color:#fff;">
+        <tr>
+          <th scope="col">Room Name</th>
+          <th scope="col" class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rooms %}
+        <tr>
+          <td>{{ r['name'] }}</td>
+          <td class="text-end">
+            <form action="{{ url_for('delete_room', room_id=r['id']) }}" method="POST" style="display:inline;">
+              <button class="btn btn-sm btn-danger" onclick="return confirm('Delete this room?');">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <p class="text-muted">No rooms added yet.</p>
+{% endif %}
+{% endblock %}

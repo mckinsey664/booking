@@ -1,0 +1,47 @@
+{% extends "admin_dashboard.html" %}
+{% block content %}
+<h2 class="mb-4">All Users</h2>
+
+<!-- 🔍 Search Bar -->
+<div class="mb-3">
+  <input type="text" id="searchInput" class="form-control" placeholder="Search by any field..." style="max-width:400px;">
+</div>
+
+<!-- ✅ Users Table -->
+<div class="table-responsive">
+  <table id="usersTable" class="table table-dark table-striped table-hover align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Email</th>
+        <th>Company</th>
+        <th>Position</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>{{ user['First name'] }}</td>
+        <td>{{ user['Last name'] }}</td>
+        <td>{{ user['Email'] }}</td>
+        <td>{{ user['Company name'] }}</td>
+        <td>{{ user['Position'] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- 🔍 Live Search Script -->
+<script>
+  document.getElementById('searchInput').addEventListener('keyup', function() {
+    const filter = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#usersTable tbody tr');
+    rows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+      row.style.display = text.includes(filter) ? '' : 'none';
+    });
+  });
+</script>
+{% endblock %}

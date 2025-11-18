@@ -1,0 +1,163 @@
+{% extends "admin_dashboard.html" %}
+{% block content %}
+<div class="container-fluid">
+
+  <!-- 🗓 Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0 text-white fw-semibold">🗓 All Reservations</h2>
+    <button class="btn btn-brand text-white fw-semibold" data-bs-toggle="modal" data-bs-target="#addReservationModal">
+      + Add Reservation
+    </button>
+  </div>
+
+  <!-- 🧾 Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} text-center mb-3 py-2">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <!-- 📋 Reservations Table -->
+  {% if reservations %}
+  <div class="card bg-dark border-0 shadow-sm p-3 rounded-3">
+    <div class="table-responsive">
+      <table class="table table-dark table-hover align-middle mb-0">
+        <thead style="background-color: #CF6000;">
+          <tr class="text-white text-center">
+            <th>Date</th>
+            <th>Time</th>
+            <th>Entity</th>
+            <th>Booked By</th>
+            <th>Room</th>
+            <th>Invites</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in reservations %}
+          <tr class="align-middle text-center">
+            <td class="text-white fw-semibold">{{ r['date'] }}</td>
+            <td><span class="badge bg-secondary fs-6 px-3 py-2">{{ r['start_time'] }}</span></td>
+            <td>
+              {% if r['entity_type'] == 'company' %}
+                <span class="text-warning">🏢 {{ r['entity_name'] }}</span>
+              {% else %}
+                <span class="text-info">👤 {{ r['entity_name'] }}</span>
+              {% endif %}
+            </td>
+            <td class="text-light">{{ r['booked_by'] }}</td>
+            <td><span class="badge bg-brand text-white fs-6 px-3 py-2">{{ r['room_name'] }}</span></td>
+            <td class="text-white-50">{{ r['invites'] or '—' }}</td>
+            <td>
+              <form action="{{ url_for('delete_reservation', reservation_id=r['id']) }}" method="post" class="d-inline">
+                <button type="submit" class="btn btn-outline-danger btn-sm px-3"
+                        onclick="return confirm('Are you sure you want to delete this reservation?');">
+                  🗑
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+    <div class="alert alert-secondary text-center mt-3 py-3">
+      <strong>No reservations found.</strong>
+    </div>
+  {% endif %}
+</div>
+
+<!-- 🟧 Add Reservation Modal -->
+<div class="modal fade" id="addReservationModal" tabindex="-1" aria-labelledby="addReservationModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-dark text-white border-0">
+      <div class="modal-header border-0">
+        <h5 class="modal-title" id="addReservationModalLabel">Add New Reservation</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="{{ url_for('admin_add_reservation') }}">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label text-white-50">Date</label>
+              <input type="date" name="date" class="form-control bg-dark text-white border-secondary" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-white-50">Start Time</label>
+              <input type="time" name="start_time" class="form-control bg-dark text-white border-secondary" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-white-50">Room</label>
+              <select name="room_id" class="form-select bg-dark text-white border-secondary" required>
+                <option value="">Select Room</option>
+                {% for room in rooms %}
+                  <option value="{{ room['id'] }}">{{ room['name'] }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-white-50">Entity Type</label>
+              <select name="entity_type" class="form-select bg-dark text-white border-secondary" required>
+                <option value="company">Company</option>
+                <option value="user">User</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-white-50">Entity Name</label>
+              <input type="text" name="entity_name" class="form-control bg-dark text-white border-secondary" placeholder="Company or User name" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-white-50">Booked By</label>
+              <input type="email" name="booked_by" class="form-control bg-dark text-white border-secondary" placeholder="email@domain.com" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label text-white-50">Invites (comma-separated)</label>
+              <input type="text" name="invites" class="form-control bg-dark text-white border-secondary" placeholder="invite1@email.com, invite2@email.com">
+            </div>
+          </div>
+          <div class="mt-4 text-end">
+            <button type="submit" class="btn btn-brand text-white px-4">Save Reservation</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🎨 Custom Styling -->
+<style>
+  .btn-brand {
+    background-color: #CF6000;
+    border: none;
+    transition: 0.3s;
+  }
+  .btn-brand:hover {
+    background-color: #b85100;
+  }
+  .bg-brand { background-color: #CF6000 !important; }
+  .table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  .badge { border-radius: 8px; }
+  .alert-secondary {
+    background-color: #2b2b2b;
+    border: none;
+    color: #d0d0d0;
+    border-radius: 6px;
+  }
+  .modal-content {
+    border-radius: 10px;
+    box-shadow: 0 4px 25px rgba(0,0,0,0.4);
+  }
+  .form-control, .form-select {
+    border-radius: 6px;
+  }
+</style>
+
+<!-- 🧩 Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login | Room Reservation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overscroll-behavior: none;   /* prevent iOS bounce */
+}
+body.fixed-height {
+  height: 100vh;               /* fallback for iOS after keyboard closes */
+}
+
+body {
+  background: url("/static/bg.png") no-repeat center center fixed;
+  background-size: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh; /* ✅ dynamic vh fixes keyboard bug */
+  overflow: hidden;   /* no scroll */
+}
+
+
+.card {
+  max-width: 400px;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.65);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  border-radius: 12px;
+  padding: 30px 25px;
+}
+
+    .logo {
+      display: block;
+      margin: 0 auto 15px auto;
+      max-width: 180px;
+    }
+    h3 {
+      color: #ffffff; /* black text */
+    }
+    .btn-brand {
+      background-color: #CF6000;
+      border: none;
+    }
+    .btn-brand:hover {
+      background-color: #b85100;
+    }
+    label {
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  <div class="card p-4 text-center">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="McKinsey Logo" class="logo">
+
+    <form method="POST" class="text-start">
+      <div class="mb-3">
+        <label for="email" class="form-label">Email address</label>
+        <input type="email" name="email" class="form-control" id="email" placeholder="name@example.com" required>
+      </div>
+      <button type="submit" class="btn btn-brand w-100 text-white">Login</button>
+    </form>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="alert alert-info mt-3">
+          {% for message in messages %}{{ message }}<br>{% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+  </div>
+  <script>
+  // Force body height to stay fixed after keyboard closes on iOS
+  function lockBodyHeight() {
+    document.body.classList.add('fixed-height');
+    document.body.style.height = window.innerHeight + 'px';
+  }
+  window.addEventListener('resize', lockBodyHeight);
+  window.addEventListener('orientationchange', lockBodyHeight);
+  lockBodyHeight();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Company Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      background-color: #000; /* ✅ Pure black background */
+      color: #fff;
+      font-family: "Segoe UI", sans-serif;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 240px;
+      background-color: #212529;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      padding-top: 25px;
+      box-shadow: 4px 0 12px rgba(0, 0, 0, 0.6);
+    }
+
+    .sidebar img {
+      display: block;
+      margin: 0 auto 20px auto;
+      max-width: 160px;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 12px 20px;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .sidebar a:hover,
+    .sidebar a.active {
+      background-color: #343a40;
+      color: #ffffff;
+    }
+
+    /* Logout Button */
+    .logout {
+      margin-top: auto;
+      background-color: #dc3545;
+      text-align: center;
+      text-decoration: none;
+      font-weight: 500;
+      transition: 0.3s;
+    }
+
+    .logout:hover {
+      background-color: #b02a37;
+    }
+
+    /* Content */
+    .content {
+      flex: 1;
+      padding: 40px 50px;
+      overflow-y: auto;
+      background-color: #000; /* ✅ Keep the inside also black */
+      border-left: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    h2 {
+      color: #CF6000; /* orange accent */
+      font-weight: 600;
+    }
+
+    p {
+      color: #d1d5db;
+      font-size: 1.05rem;
+    }
+
+    /* Info Card */
+    .info-card {
+      background-color: #111;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      transition: 0.3s;
+    }
+
+    .info-card:hover {
+      background-color: #1a1a1a;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #343a40;
+      border-radius: 5px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #495057;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="McKinsey Electronics Logo">
+
+    <a href="{{ url_for('company_slots_user') }}" class="{% if request.endpoint == 'company_slots_user' %}active{% endif %}">
+      🕒 My Time Slots
+    </a>
+
+    <a href="{{ url_for('company_all_requests') }}" class="{% if request.endpoint == 'company_all_requests' %}active{% endif %}">
+      📋 All Requests
+    </a>
+
+    <a href="{{ url_for('company_requests') }}" class="{% if request.endpoint == 'company_requests' %}active{% endif %}">
+      📨 Pending Requests
+    </a>
+
+    <a href="{{ url_for('company_approved_meetings') }}" class="{% if request.endpoint == 'company_approved_meetings' %}active{% endif %}">
+      ✅ Approved Meetings
+    </a>
+
+    <a href="{{ url_for('logout') }}" class="logout text-white py-2">Logout</a>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content">
+    {% block content %}
+    <h2>👋 Welcome, {{ company_name }}</h2>
+    <p>Manage your company’s slots, review meeting requests, and track approvals directly from this dashboard.</p>
+
+    <div class="mt-4">
+      <div class="info-card">
+        <h5 class="text-white fw-semibold mb-2">Quick Tips</h5>
+        <ul class="mb-0 text-light small">
+          <li>Use <span class="text-warning">“My Time Slots”</span> to manage available meeting times.</li>
+          <li>Check <span class="text-warning">“Pending Requests”</span> for requests waiting for your approval.</li>
+          <li>View <span class="text-warning">“Approved Meetings”</span> to see all confirmed meetings.</li>
+        </ul>
+      </div>
+    </div>
+    {% endblock %}
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

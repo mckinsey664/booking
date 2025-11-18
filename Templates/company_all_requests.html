@@ -1,0 +1,115 @@
+{% extends "company_dashboard.html" %}
+{% block content %}
+
+<div class="container-fluid mt-4">
+  <!-- 🧾 Header -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="text-white fw-semibold mb-0">📋 All Meeting Requests</h2>
+  </div>
+  <p class="text-secondary">View and filter all your meeting requests below.</p>
+
+  <!-- 🔍 Filters -->
+  <form method="get" class="d-flex flex-wrap align-items-center gap-2 mb-4">
+    <input type="text" name="q" value="{{ search_query or '' }}"
+           class="form-control bg-dark text-white border-secondary"
+           placeholder="🔍 Search by email or date (YYYY-MM-DD)"
+           style="max-width: 300px;">
+
+    <select name="status" class="form-select bg-dark text-white border-secondary" style="max-width: 180px;">
+      <option value="">All Statuses</option>
+      <option value="Pending" {% if status_filter == 'Pending' %}selected{% endif %}>Pending</option>
+      <option value="Approved" {% if status_filter == 'Approved' %}selected{% endif %}>Approved</option>
+      <option value="Rejected" {% if status_filter == 'Rejected' %}selected{% endif %}>Rejected</option>
+    </select>
+
+    <button class="btn btn-brand text-white fw-semibold">Filter</button>
+
+    {% if status_filter or search_query %}
+      <a href="{{ url_for('company_all_requests') }}" class="btn btn-outline-light">Reset</a>
+    {% endif %}
+  </form>
+
+  <!-- 📅 Requests Table -->
+  {% if requests %}
+  <div class="card bg-dark border-0 shadow-sm rounded-3">
+    <div class="table-responsive">
+      <table class="table table-dark table-hover align-middle mb-0">
+        <thead style="background-color: #CF6000;">
+          <tr class="text-center text-white">
+            <th>Requester Email</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Room</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody class="text-center">
+          {% for r in requests %}
+          <tr>
+            <td class="fw-semibold">{{ r['booker_email'] or '-' }}</td>
+            <td>{{ r['date'] }}</td>
+            <td>{{ r['start_time'] }}</td>
+            <td><span class="badge bg-brand text-white px-3 py-2">{{ r['room_name'] }}</span></td>
+            <td>
+              {% if r['status'] == 'Approved' %}
+                <span class="badge bg-success px-3 py-2">Approved</span>
+              {% elif r['status'] == 'Pending' %}
+                <span class="badge bg-warning text-dark px-3 py-2">Pending</span>
+              {% else %}
+                <span class="badge bg-danger px-3 py-2">Rejected</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-secondary text-center mt-4 border-0 bg-opacity-50 bg-dark text-light py-3">
+    <strong>No meeting requests found.</strong>
+  </div>
+  {% endif %}
+</div>
+
+<!-- 🎨 Styles -->
+<style>
+  .btn-brand {
+    background-color: #CF6000;
+    border: none;
+    transition: 0.3s;
+  }
+  .btn-brand:hover {
+    background-color: #b85100;
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .bg-brand {
+    background-color: #CF6000 !important;
+  }
+
+  .form-control::placeholder {
+    color: #aaa;
+  }
+
+  .table th {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .table td {
+    font-size: 0.95rem;
+    color: #f8f9fa;
+  }
+
+  .alert-secondary {
+    background-color: #111;
+    color: #ccc;
+  }
+</style>
+
+{% endblock %}
