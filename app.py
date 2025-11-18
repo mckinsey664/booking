@@ -17,12 +17,18 @@ app.secret_key = "yoursecretkey"
 ADMIN_EMAIL = "admin@mckinsey-electronics.com"  # admin account that skips verification
 
 # Email config
+# app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+# app.config['MAIL_PORT'] = 587
+# app.config['MAIL_USERNAME'] = 'lynn.m@mckinsey-electronics.com'
+# app.config['MAIL_PASSWORD'] = 'kpuf hgzt yycc tcan'
+# app.config['MAIL_USE_TLS'] = True
+# app.config['MAIL_DEFAULT_SENDER'] = 'lynn.m@mckinsey-electronics.com'
+
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
+app.config['MAIL_PORT'] = 465
 app.config['MAIL_USERNAME'] = 'lynn.m@mckinsey-electronics.com'
 app.config['MAIL_PASSWORD'] = 'kpuf hgzt yycc tcan'
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_DEFAULT_SENDER'] = 'lynn.m@mckinsey-electronics.com'
+
 mail = Mail(app)
 
 ######################## GOOGLE SHEETS INTEGRATION #########################
