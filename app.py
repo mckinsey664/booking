@@ -1018,44 +1018,67 @@ import os
 #     return created
 
 
-CALENDAR_SCOPES = ['https://www.googleapis.com/auth/calendar']
+import json
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from google.auth.transport.requests import Request
 
-def create_calendar_event(summary, description, start_datetime, end_datetime, attendees, timezone='Asia/Beirut'):
-    creds = None
 
+CALENDAR_SCOPES = ["https://www.googleapis.com/auth/calendar"]
+
+
+def create_calendar_event(summary, description, start_datetime, end_datetime, attendees, timezone="Asia/Beirut"):
+    # Load creds from Render environment variables
     creds_json = os.environ.get("CALENDAR_CREDS_JSON")
     token_json = os.environ.get("CALENDAR_TOKEN_JSON")
 
-    # Load credentials JSON from env variable
-    if creds_json:
-        creds_dict = json.loads(creds_json)
-        creds = Credentials.from_authorized_user_info(creds_dict, CALENDAR_SCOPES)
+    if not creds_json or not token_json:
+        print("❌ Missing Google Calendar environment variables")
+        return None
 
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            # This part will run only once the first time (interactive login cannot happen on Render)
-            # You must authorize locally ONCE, then paste token file into env variable.
-            raise Exception("❌ Calendar: No valid credentials. Authorize locally and upload token.")
-    
-    service = build('calendar', 'v3', credentials=creds)
+    creds_raw = json.loads(creds_json)["installed"]
+    token_raw = json.loads(token_json)
+
+    creds = Credentials(
+        token=token_raw.get("token"),
+        refresh_token=token_raw.get("refresh_token"),
+        token_uri=creds_raw["token_uri"],
+        client_id=creds_raw["client_id"],
+        client_secret=creds_raw["client_secret"],
+        scopes=CALENDAR_SCOPES,
+    )
+
+    # Refresh token if expired
+    if creds.expired and creds.refresh_token:
+        creds.refresh(Request())
+
+    # Build service
+    service = build("calendar", "v3", credentials=creds)
 
     event = {
-        'summary': summary,
-        'description': description,
-        'start': {'dateTime': start_datetime.isoformat(), 'timeZone': timezone},
-        'end': {'dateTime': end_datetime.isoformat(), 'timeZone': timezone},
-        'attendees': [{'email': e} for e in sorted(set(attendees))],
+        "summary": summary,
+        "description": description,
+        "start": {"dateTime": start_datetime.isoformat(), "timeZone": timezone},
+        "end": {"dateTime": end_datetime.isoformat(), "timeZone": timezone},
+        "attendees": [{"email": e} for e in sorted(set(attendees))],
+        "reminders": {
+            "useDefault": False,
+            "overrides": [
+                {"method": "email", "minutes": 60},
+                {"method": "popup", "minutes": 10},
+            ],
+        },
     }
 
     created = service.events().insert(
-        calendarId='primary',
+        calendarId="primary",
         body=event,
-        sendUpdates='all'
+        sendUpdates="all"
     ).execute()
 
+    print("✅ Calendar event created:", created.get("htmlLink"))
     return created
+
 
 
 # ✅ APPROVE REQUEST ENDPOINT
