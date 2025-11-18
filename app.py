@@ -7,7 +7,8 @@ from flask import jsonify
 from flask import request
 import gspread
 from google.oauth2.service_account import Credentials
-
+import smtplib
+from email.message import EmailMessage
 
 
 
@@ -24,12 +25,12 @@ ADMIN_EMAIL = "admin@mckinsey-electronics.com"  # admin account that skips verif
 # app.config['MAIL_USE_TLS'] = True
 # app.config['MAIL_DEFAULT_SENDER'] = 'lynn.m@mckinsey-electronics.com'
 
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 465
-app.config['MAIL_USERNAME'] = 'lynn.m@mckinsey-electronics.com'
-app.config['MAIL_PASSWORD'] = 'kpuf hgzt yycc tcan'
+# app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+# app.config['MAIL_PORT'] = 465
+# app.config['MAIL_USERNAME'] = 'lynn.m@mckinsey-electronics.com'
+# app.config['MAIL_PASSWORD'] = 'kpuf hgzt yycc tcan'
 
-mail = Mail(app)
+# mail = Mail(app)
 
 ######################## GOOGLE SHEETS INTEGRATION #########################
 # ---- Google Sheets setup ----
@@ -196,13 +197,33 @@ def login():
         session["code"] = code
 
         # ✅ Send verification email
-        msg = Message(
-            subject="Your verification code",
-            sender=app.config.get("MAIL_DEFAULT_SENDER"),
-            recipients=[email]
-        )
-        msg.body = f"Your verification code is: {code}"
-        mail.send(msg)
+        # msg = Message(
+        #     subject="Your verification code",
+        #     sender=app.config.get("MAIL_DEFAULT_SENDER"),
+        #     recipients=[email]
+        # )
+        # msg.body = f"Your verification code is: {code}"
+        # mail.send(msg)
+
+
+
+        # Send verification email using Gmail SMTP
+        sender_email = "lynn.m@mckinsey-electronics.com"
+        sender_password = "kpuf hgzt yycc tcan"  # Gmail App Password ONLY
+
+        msg = EmailMessage()
+        msg["Subject"] = "Your verification code"
+        msg["From"] = sender_email
+        msg["To"] = email
+        msg.set_content(f"Your verification code is: {code}")
+
+        try:
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+                smtp.login(sender_email, sender_password)
+                smtp.send_message(msg)
+        except Exception as e:
+            print("❌ Email failed:", e)
+
         conn.close()
 
         flash("✅ Verification code sent to your email.", "success")
