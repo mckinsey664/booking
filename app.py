@@ -1068,9 +1068,8 @@ def approve_request(reservation_id):
             f"Thank you,\nMcKinsey Electronics Team"
         )
 
-        msg = Message(subject, sender=app.config["MAIL_USERNAME"], recipients=recipients)
-        msg.body = body
-        mail.send(msg)
+        to_field = ", ".join(recipients)
+        send_plain_email(to_field, subject, body)
         flash("✅ Email sent successfully!", "success")
 
         # --- Create Google Calendar event ---
@@ -1140,11 +1139,8 @@ def reject_request(reservation_id):
             f"Thank you,\n"
         )
 
-        msg = Message(subject,
-                      sender=app.config['MAIL_USERNAME'],
-                      recipients=recipients)
-        msg.body = body
-        mail.send(msg)
+        to_field = ", ".join(recipients)
+        send_plain_email(to_field, subject, body)
 
         flash("❌ Meeting rejected and email sent successfully.", "danger")
     except Exception as e:
@@ -1438,9 +1434,8 @@ def cancel_meeting(meeting_id):
         # Send email if invites exist
         attendees = meeting["invites"].split(",") if meeting["invites"] else []
         if attendees:
-            msg = Message(subject, sender=app.config['MAIL_USERNAME'], recipients=attendees)
-            msg.body = body
-            mail.send(msg)
+            to_field = ", ".join(attendees)
+            send_plain_email(to_field, subject, body)
             flash("📧 Cancellation email sent to all attendees.", "info")
 
     # Delete record
