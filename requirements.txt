@@ -3,3 +3,6 @@ Flask-Mail==0.10.0
 gspread==6.2.1
 google-auth==2.34.0
 gunicorn==23.0.0
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
