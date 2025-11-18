@@ -8,18 +8,16 @@ import gspread
 from google.oauth2.service_account import Credentials
 import smtplib
 from email.message import EmailMessage
+from datetime import datetime, timedelta
 
 
 SMTP_EMAIL = "lynn.m@mckinsey-electronics.com"
 SMTP_PASSWORD = "kpuf hgzt yycc tcan"   # Gmail app password
 
-
-
 app = Flask(__name__)
 app.secret_key = "yoursecretkey"
 
 ADMIN_EMAIL = "admin@mckinsey-electronics.com"  # admin account that skips verification
-
 
 ######################## GOOGLE SHEETS INTEGRATION #########################
 # ---- Google Sheets setup ----
@@ -90,7 +88,6 @@ def send_plain_email(to_email, subject, message):
     except Exception as e:
         print("❌ Email failed:", e)
         return False
-
 
 def get_users_from_sheets2():
     """
@@ -1011,13 +1008,6 @@ def create_calendar_event(summary, description, start_datetime, end_datetime, at
     print("✅ Calendar event:", created.get('htmlLink'))
     return created
 
-
-# ✅ IMPORTS (make sure these are near the top of app.py)
-from flask_mail import Message
-from datetime import datetime, timedelta
-import sqlite3
-
-
 # ✅ APPROVE REQUEST ENDPOINT
 @app.route("/approve_request/<int:reservation_id>", methods=["POST"])
 @verified_required
@@ -1252,78 +1242,6 @@ def logout():
     return redirect(url_for("login"))
 
 
-
-# @app.route("/search_entities")
-# @verified_required
-# def search_entities():
-#     q = request.args.get("q", "").strip().lower()
-#     conn = get_db()
-#     conn.row_factory = sqlite3.Row
-#     c = conn.cursor()
-
-#     results = []
-
-#     # 🔎 Search approved users
-#     people = c.execute("""
-#         SELECT id, first_name, last_name, company_name 
-#         FROM approved_users
-#         WHERE lower(first_name) LIKE ? OR lower(last_name) LIKE ? OR lower(email) LIKE ?
-#         LIMIT 10
-#     """, (f"%{q}%", f"%{q}%", f"%{q}%")).fetchall()
-#     for p in people:
-#         results.append({
-#             "type": "person",
-#             "id": p["id"],
-#             "label": f"{p['first_name']} {p['last_name']} ({p['company_name']})"
-#         })
-
-#     # 🔎 Search companies
-#     companies = c.execute("""
-#         SELECT id, name
-#         FROM companies
-#         WHERE lower(name) LIKE ?
-#         LIMIT 10
-#     """, (f"%{q}%",)).fetchall()
-#     for row in companies:
-#         results.append({
-#             "type": "company",
-#             "id": row["id"],
-#             "label": row["name"]
-#         })
-
-#     return jsonify(results)
-#2------
-#  @app.route("/search_entities")
-# @verified_required
-# def search_entities():
-#     query = request.args.get("q", "").strip().lower()
-#     conn = get_db()
-#     conn.row_factory = sqlite3.Row
-#     c = conn.cursor()
-
-#     if not query:
-#         return jsonify([])
-
-#     # ✅ Search only companies by name
-#     c.execute("""
-#         SELECT id, name 
-#         FROM companies
-#         WHERE lower(name) LIKE ?
-#         ORDER BY name ASC
-#         LIMIT 15
-#     """, (f"%{query}%",))
-#     companies = c.fetchall()
-
-#     # ✅ Return formatted data for frontend
-#     results = [
-#         {
-#             "label": company["name"],
-#             "type": "company",
-#             "id": company["id"]
-#         } 
-#         for company in companies
-#     ]
-#     return jsonify(results)
 @app.route("/search_entities")
 @verified_required
 def search_entities():
@@ -1394,9 +1312,6 @@ def my_meetings():
 
     return render_template("my_meetings.html", meetings=meetings)
 
-
-
-
 @app.route("/cancel_meeting/<int:meeting_id>", methods=["POST"])
 @verified_required
 def cancel_meeting(meeting_id):
@@ -1445,9 +1360,6 @@ def cancel_meeting(meeting_id):
 
     flash("🗑️ Meeting cancelled successfully.", "success")
     return redirect(url_for("my_meetings"))
-
-
-
 
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=5000, debug=True)
