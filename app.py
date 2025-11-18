@@ -1562,15 +1562,21 @@ def my_meetings():
     if not user:
         return redirect(url_for("login"))
 
+
+    # Fetch meetings:
+    # 1) Meetings I booked (r.user_id = me)
+    # 2) Meetings where I am the invited PERSON (entity_type='person' AND entity_id = me)
     meetings = c.execute("""
         SELECT r.*, 
                COALESCE(c.name, au.first_name || ' ' || au.last_name) AS entity_name
         FROM reservations r
         LEFT JOIN companies c ON (r.entity_type='company' AND r.entity_id = c.id)
         LEFT JOIN approved_users au ON (r.entity_type='person' AND r.entity_id = au.id)
-        WHERE r.user_id=?
-        ORDER BY date, start_time
-    """, (user["id"],)).fetchall()
+        WHERE r.user_id = ?
+           OR (r.entity_type = 'person' AND r.entity_id = ?)
+        ORDER BY r.date, r.start_time
+    """, (user_id, user_id)).fetchall()
+
 
     return render_template("my_meetings.html", meetings=meetings)
 
