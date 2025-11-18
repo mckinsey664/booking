@@ -143,10 +143,17 @@ def verified_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# def get_db():
+#     conn = sqlite3.connect("rooms.db")
+#     conn.row_factory = sqlite3.Row
+#     return conn
+
 def get_db():
-    conn = sqlite3.connect("rooms.db")
+    DB_PATH = "/var/data/rooms.db"
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
 
 def admin_required(f):
     @wraps(f)
@@ -200,10 +207,6 @@ def login():
         # Save temporary session info
         session["pending_email"] = email
         session["code"] = code
-
-
-
-
 
         # Send verification email using Gmail SMTP
         sender_email = "lynn.m@mckinsey-electronics.com"
