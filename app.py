@@ -26,7 +26,7 @@ import json, os
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
-creds_json = json.loads(os.environ["GOOGLE_CREDS"])
+creds_json = json.loads(os.environ["GOOGLE_CREDS_JSON"])
 CREDS = Credentials.from_service_account_info(creds_json, scopes=SCOPES)
 
 gc = gspread.authorize(CREDS)
