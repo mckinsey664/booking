@@ -970,8 +970,14 @@ CALENDAR_SCOPES = ['https://www.googleapis.com/auth/calendar']
 
 def create_calendar_event(summary, description, start_datetime, end_datetime, attendees, timezone='Asia/Beirut'):
     creds = None
-    token_path = 'token_calendar.json'
-    creds_path = 'credentials_calendar.json'
+    # token_path = 'token_calendar.json'
+    # creds_path = 'credentials_calendar.json'
+
+
+    token_path = '/opt/render/project/src/token_calendar.json'
+    creds_path = '/opt/render/project/src/credentials_calendar.json'
+
+
 
     if os.path.exists(token_path):
         creds = Credentials.from_authorized_user_file(token_path, CALENDAR_SCOPES)
