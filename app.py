@@ -966,31 +966,79 @@ from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
 import os
 
+# CALENDAR_SCOPES = ['https://www.googleapis.com/auth/calendar']
+
+# def create_calendar_event(summary, description, start_datetime, end_datetime, attendees, timezone='Asia/Beirut'):
+#     creds = None
+#     # token_path = 'token_calendar.json'
+#     # creds_path = 'credentials_calendar.json'
+
+#     creds_json = os.environ.get("CALENDAR_CREDS_JSON")
+#     token_json = os.environ.get("CALENDAR_TOKEN_JSON")
+
+
+
+
+#     if os.path.exists(token_path):
+#         creds = Credentials.from_authorized_user_file(token_path, CALENDAR_SCOPES)
+
+#     if not creds or not creds.valid:
+#         if creds and creds.expired and creds.refresh_token:
+#             creds.refresh(Request())
+#         else:
+#             flow = InstalledAppFlow.from_client_secrets_file(creds_path, CALENDAR_SCOPES)
+#             creds = flow.run_local_server(port=0, prompt='consent')
+#         with open(token_path, 'w') as token:
+#             token.write(creds.to_json())
+
+#     service = build('calendar', 'v3', credentials=creds)
+
+#     event = {
+#         'summary': summary,
+#         'description': description,
+#         'start': {'dateTime': start_datetime.isoformat(), 'timeZone': timezone},
+#         'end': {'dateTime': end_datetime.isoformat(), 'timeZone': timezone},
+#         'attendees': [{'email': e} for e in sorted(set(attendees))],
+#         'reminders': {
+#             'useDefault': False,
+#             'overrides': [
+#                 {'method': 'email', 'minutes': 60},
+#                 {'method': 'popup', 'minutes': 10},
+#             ],
+#         },
+#     }
+
+#     created = service.events().insert(
+#         calendarId='primary',
+#         body=event,
+#         sendUpdates='all'
+#     ).execute()
+
+#     print("✅ Calendar event:", created.get('htmlLink'))
+#     return created
+
+
 CALENDAR_SCOPES = ['https://www.googleapis.com/auth/calendar']
 
 def create_calendar_event(summary, description, start_datetime, end_datetime, attendees, timezone='Asia/Beirut'):
     creds = None
-    # token_path = 'token_calendar.json'
-    # creds_path = 'credentials_calendar.json'
 
+    creds_json = os.environ.get("CALENDAR_CREDS_JSON")
+    token_json = os.environ.get("CALENDAR_TOKEN_JSON")
 
-    token_path = '/opt/render/project/src/token_calendar.json'
-    creds_path = '/opt/render/project/src/credentials_calendar.json'
-
-
-
-    if os.path.exists(token_path):
-        creds = Credentials.from_authorized_user_file(token_path, CALENDAR_SCOPES)
+    # Load credentials JSON from env variable
+    if creds_json:
+        creds_dict = json.loads(creds_json)
+        creds = Credentials.from_authorized_user_info(creds_dict, CALENDAR_SCOPES)
 
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file(creds_path, CALENDAR_SCOPES)
-            creds = flow.run_local_server(port=0, prompt='consent')
-        with open(token_path, 'w') as token:
-            token.write(creds.to_json())
-
+            # This part will run only once the first time (interactive login cannot happen on Render)
+            # You must authorize locally ONCE, then paste token file into env variable.
+            raise Exception("❌ Calendar: No valid credentials. Authorize locally and upload token.")
+    
     service = build('calendar', 'v3', credentials=creds)
 
     event = {
@@ -999,13 +1047,6 @@ def create_calendar_event(summary, description, start_datetime, end_datetime, at
         'start': {'dateTime': start_datetime.isoformat(), 'timeZone': timezone},
         'end': {'dateTime': end_datetime.isoformat(), 'timeZone': timezone},
         'attendees': [{'email': e} for e in sorted(set(attendees))],
-        'reminders': {
-            'useDefault': False,
-            'overrides': [
-                {'method': 'email', 'minutes': 60},
-                {'method': 'popup', 'minutes': 10},
-            ],
-        },
     }
 
     created = service.events().insert(
@@ -1014,8 +1055,8 @@ def create_calendar_event(summary, description, start_datetime, end_datetime, at
         sendUpdates='all'
     ).execute()
 
-    print("✅ Calendar event:", created.get('htmlLink'))
     return created
+
 
 # ✅ APPROVE REQUEST ENDPOINT
 @app.route("/approve_request/<int:reservation_id>", methods=["POST"])
