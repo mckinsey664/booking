@@ -10,6 +10,10 @@ import smtplib
 from email.message import EmailMessage
 
 
+SMTP_EMAIL = "lynn.m@mckinsey-electronics.com"
+SMTP_PASSWORD = "kpuf hgzt yycc tcan"   # Gmail app password
+
+
 
 app = Flask(__name__)
 app.secret_key = "yoursecretkey"
@@ -68,6 +72,25 @@ def get_users_from_sheets():
             filtered.append(filtered_row)
 
     return filtered
+
+def send_plain_email(to_email, subject, message):
+    try:
+        msg = EmailMessage()
+        msg["Subject"] = subject
+        msg["From"] = SMTP_EMAIL
+        msg["To"] = to_email
+        msg.set_content(message)
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+            smtp.login(SMTP_EMAIL, SMTP_PASSWORD)
+            smtp.send_message(msg)
+
+        print(f"📧 Email sent to {to_email}")
+        return True
+    except Exception as e:
+        print("❌ Email failed:", e)
+        return False
+
 
 def get_users_from_sheets2():
     """
@@ -377,13 +400,9 @@ def reserve():
             )
 
         # ✅ Send confirmation email
-        from flask_mail import Message
-        msg = Message(subject, sender=app.config["MAIL_USERNAME"], recipients=recipients)
-        msg.body = body
-        mail.send(msg)
-
+        to_field = ", ".join(recipients)
+        send_plain_email(to_field, subject, body)
         flash(f"✅ Meeting request sent successfully!", "success")
-        # return redirect(url_for("reserve", entity_type=entity_type, entity_id=entity_id, date=selected_date))
         return redirect(url_for("my_meetings"))
 
 
