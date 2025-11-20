@@ -51,7 +51,7 @@ def get_users_from_sheets():
     # Map header names to their column index
     header_map = {h.strip(): i for i, h in enumerate(headers)}
 
-    desired_keys = ["First name", "Last name", "Email", "Company Name", "Position"]
+    desired_keys = ["First name", "Last name", "Email", "Company name", "Position"]
 
     # Column R is the 18th column (0-based index 17) — adjust if needed
     # Or safer: just use absolute index if you know it's column R
