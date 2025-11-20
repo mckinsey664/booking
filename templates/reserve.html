@@ -138,7 +138,7 @@
 
       {% set half = (available_times|length + 1) // 2 %}
       <div class="row">
-        <div class="col-md-6">
+        <div class="col-6">
           {% for s in available_times[:half] %}
             <a href="#"
                class="time-slot"
@@ -148,7 +148,7 @@
             </a>
           {% endfor %}
         </div>
-        <div class="col-md-6">
+        <div class="col-6">
           {% for s in available_times[half:] %}
             <a href="#"
                class="time-slot"
@@ -165,6 +165,7 @@
       </button>
     </form>
   </div>
+
 {% elif entity_id and selected_date %}
   <div class="form-card">
     <p class="text-center text-muted mb-0">No available times left.</p>
@@ -179,17 +180,14 @@
       slot.addEventListener("click", function(e) {
         e.preventDefault();
 
-        // Reset styles
         document.querySelectorAll(".time-slot").forEach(el => {
           el.style.background = "#f8f9fa";
           el.style.color = "#000";
         });
 
-        // Highlight selected
         this.style.background = "#CF6000";
         this.style.color = "#fff";
 
-        // Set hidden fields
         document.getElementById("slotId").value = this.dataset.slotId;
         document.getElementById("chosenTime").value = this.dataset.startTime;
         document.getElementById("reserveBtn").disabled = false;
