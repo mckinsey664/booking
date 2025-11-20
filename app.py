@@ -956,41 +956,44 @@ def reserve():
         subject_guest = "New Meeting Request – Action Required"
 
         html_guest = f"""
-        <div style='font-family:Arial,sans-serif;font-size:15px;color:#202124'>
-          <p>Dear {full_name},</p>
+<div style='font-family:Arial,sans-serif;font-size:15px;color:#202124'>
 
-          <p>
-            You have received a new meeting request from 
-            <b>{requester_full_name}</b> from <b>{selected_company}</b>.
-          </p>
+  <p>Dear {full_name},</p>
 
-          <p><b>Date:</b> {pretty_date}<br>
-             <b>Time:</b> {pretty_time}<br>
-             <b>Meeting Room:</b> {free_room}<br>
-             <b>Requested by:</b> {email}</p>
+  <p>You have received a new meeting request from <b>{requester_full_name}</b> 
+     from <b>{selected_company}</b>.</p>
 
-          <p>Please choose an option below:</p>
+  <p><b>Date:</b> {pretty_date}<br>
+     <b>Time:</b> {pretty_time}<br>
+     <b>Meeting Room:</b> {free_room}<br>
+     <b>Requested by:</b> {email}</p>
 
-          <div style="margin-top:20px;">
-            <a href="{approve_link}" 
-               style="background:#1a73e8;color:#fff;padding:12px 22px;
-                      text-decoration:none;border-radius:6px;font-weight:bold;margin-right:10px;">
-               YES
-            </a>
+  <p>Please choose an option below:</p>
 
-            <a href="{reject_link}" 
-               style="background:#d93025;color:#fff;padding:12px 22px;
-                      text-decoration:none;border-radius:6px;font-weight:bold;">
-               NO
-            </a>
-          </div>
+  <div style="margin-top:15px;">
+    <a href="{approve_link}" 
+       style="padding:10px 18px;border:1px solid #ccc;
+              border-radius:4px;text-decoration:none;
+              color:#000;margin-right:10px;">
+      Confirm
+    </a>
 
-          <br><br>
-          <p style="color:#5f6368;font-size:12px;">
-            This is an automated message from the McKinsey Electronics Booking System.
-          </p>
-        </div>
-        """
+    <a href="{reject_link}" 
+       style="padding:10px 18px;border:1px solid #ccc;
+              border-radius:4px;text-decoration:none;
+              color:#000;">
+      Reject
+    </a>
+  </div>
+
+  <br><br>
+  <p style="color:#5f6368;font-size:12px;">
+    This is an automated message from the McKinsey Electronics Booking System.
+  </p>
+
+</div>
+"""
+
 
         send_html_email(target_email, subject_guest, html_guest)
 
