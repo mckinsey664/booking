@@ -929,6 +929,10 @@ def reserve():
         # Format date
         pretty_date = datetime.strptime(selected_date, "%Y-%m-%d").strftime("%-d %B %Y")
 
+        subject_guest = build_invitation_subject(selected_date, start_dt.strftime("%H:%M"), end_dt.strftime("%H:%M"))
+        subject_requester = subject_guest
+
+
         start_dt = datetime.strptime(chosen_time, "%H:%M")
         end_dt = start_dt + timedelta(minutes=20)
         pretty_time = start_dt.strftime("%I:%M") + " – " + end_dt.strftime("%I:%M %p")
@@ -936,7 +940,7 @@ def reserve():
         # -----------------------------
         # EMAIL TO REQUESTER
         # -----------------------------
-        subject_requester = "Your Meeting Request Has Been Submitted"
+        # subject_requester = "Your Meeting Request Has Been Submitted"
 
         body_requester = (
             f"Dear {user['first_name']},\n\n"
@@ -953,7 +957,7 @@ def reserve():
         # EMAIL TO GUEST (HTML)
         # -----------------------------
 
-        subject_guest = "New Meeting Request – Action Required"
+        # subject_guest = "New Meeting Request – Action Required"
 
         html_guest = f"""
 <div style='font-family:Arial,sans-serif;font-size:15px;color:#202124'>
@@ -1062,6 +1066,22 @@ def send_html_email(to_email, subject, html_body):
         print("❌ HTML Email failed:", e)
         return False
 
+def build_invitation_subject(date_str, start_time, end_time):
+    dt = datetime.strptime(f"{date_str} {start_time}", "%Y-%m-%d %H:%M")
+    end_dt = datetime.strptime(f"{date_str} {end_time}", "%Y-%m-%d %H:%M")
+
+    weekday = dt.strftime("%a")  # Mon
+    month = dt.strftime("%B")    # December
+    day = dt.strftime("%-d")     # 9
+    year = dt.strftime("%Y")     # 2025
+
+    pretty_start = dt.strftime("%-I:%M%p").lower()   # 1:30pm
+    pretty_end   = end_dt.strftime("%-I:%M%p").lower()
+
+    return (
+        f"Invitation: Semicon Summit Dubai 2025 @ "
+        f"{weekday} {month} {day}, {year} {pretty_start} - {pretty_end} (GMT+4)"
+    )
 
 ################################################################################################
 
