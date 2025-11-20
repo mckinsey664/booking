@@ -999,7 +999,7 @@ def reserve():
 
   <br><br>
   <p style="color:#5f6368;font-size:12px;">
-    This is an automated message from the McKinsey Electronics Booking System.
+    
   </p>
 
 </div>
@@ -2257,61 +2257,6 @@ def cancel_meeting(meeting_id):
     return redirect(url_for("my_meetings"))
 
 
-
-def import_companies_and_contacts():
-    sh = gc.open_by_key(SHEET_ID)
-    
-    # Load companies sheet
-    ws_companies = sh.worksheet("DSS Company Names")
-    rows_companies = ws_companies.get_all_records()
-    
-    # Load contacts sheet
-    ws_contacts = sh.worksheet("DSS Contacts linked to Companies")
-    rows_contacts = ws_contacts.get_all_records()
-
-    conn = get_db()
-    conn.row_factory = sqlite3.Row
-    c = conn.cursor()
-
-    # 1️⃣ Import Companies
-    company_map = {}  # company_code → id in DB
-    
-    for row in rows_companies:
-        code = row["Company Code"]
-        name = row["Company Name"].strip()
-
-        # Insert OR IGNORE (avoid duplicates)
-        c.execute("""
-            INSERT OR IGNORE INTO companies(id, name, description)
-            VALUES (?, ?, '')
-        """, (code, name))
-        
-        company_map[code] = code  # DB id = code (we keep same ID)
-
-    # 2️⃣ Import Contacts
-    for row in rows_contacts:
-        code = row["Company Code"]
-        email = row["Contacts Email"].strip().lower()
-
-        if code not in company_map:
-            continue  # skip unknown company
-
-        c.execute("""
-            INSERT OR IGNORE INTO company_contacts(company_id, email)
-            VALUES (?, ?)
-        """, (code, email))
-
-    conn.commit()
-    conn.close()
-    print("✅ Companies & Contacts Imported Successfully")
-
-@app.route("/admin/import_companies", methods=["POST"])
-@admin_required
-def admin_import_companies():
-    import_companies_and_contacts()
-    flash("✅ Companies & contacts imported successfully!", "success")
-    return redirect(url_for("admin_companies"))
-
 @app.route("/admin/clear_approved_users", methods=["POST"])
 def clear_approved_users():
     conn = get_db()
@@ -2332,38 +2277,111 @@ def clear_approved_users():
 
 @app.route("/respond_meeting/<int:reservation_id>")
 def respond_meeting(reservation_id):
+    """
+    Handles approval/rejection from email links.
+    No login required (email-based approval).
+    """
     decision = request.args.get("decision")
 
     if decision not in ("approve", "reject"):
-        return "Invalid decision.", 400
+        return "Invalid action.", 400
 
     conn = get_db()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
 
-    # Fetch reservation
-    c.execute("SELECT * FROM reservations WHERE id=?", (reservation_id,))
-    reservation = c.fetchone()
+    # Pull reservation, requester, target
+    reservation = c.execute("""
+        SELECT r.*,
+               req.first_name || ' ' || req.last_name AS requester_name,
+               req.email  AS requester_email,
+               target.first_name || ' ' || target.last_name AS target_name,
+               target.email AS target_email
+        FROM reservations r
+        JOIN approved_users req    ON r.user_id   = req.id
+        JOIN approved_users target ON r.entity_id = target.id
+        WHERE r.id = ? AND r.entity_type = 'person'
+    """, (reservation_id,)).fetchone()
 
     if not reservation:
         return "Reservation not found.", 404
 
-    # Update status
-    new_status = "Approved" if decision == "approve" else "Rejected"
-    c.execute("UPDATE reservations SET status=? WHERE id=?", (new_status, reservation_id))
-    conn.commit()
-    conn.close()
-
-    # Response message
+    # ----------------------------
+    # APPROVE
+    # ----------------------------
     if decision == "approve":
+
+        # Update DB
+        c.execute("UPDATE reservations SET status='Approved' WHERE id=?", (reservation_id,))
+        conn.commit()
+
+        # Recipients: requester + target + extra invites
+        invites_list = [e.strip() for e in (reservation["invites"] or "").split(",") if e.strip()]
+        recipients = list(dict.fromkeys(invites_list + [reservation["requester_email"], reservation["target_email"]]))
+
+        # Send notification
+        subject = f"Meeting Request Approved - {reservation['target_name']}"
+        body = (
+            f"Hello,\n\n"
+            f"Your meeting request with {reservation['target_name']} has been approved.\n\n"
+            f"📅 Date: {reservation['date']}\n"
+            f"⏰ Time: {reservation['start_time']}\n"
+            f"🏠 Room: {reservation['room_name'] or 'TBD'}\n\n"
+            f"Thank you,\nMcKinsey Electronics Team"
+        )
+
+        send_plain_email(", ".join(recipients), subject, body)
+
+        # Calendar event
+        start_dt = datetime.strptime(f"{reservation['date']} {reservation['start_time']}", "%Y-%m-%d %H:%M")
+        end_dt = start_dt + timedelta(minutes=20)
+
+        summary = f"Meeting with {reservation['target_name']}"
+        description = (
+            f"Approved meeting between {reservation['requester_name']} "
+            f"and {reservation['target_name']}.\n"
+            f"Room: {reservation['room_name'] or 'TBD'}"
+        )
+
+        try:
+            create_calendar_event(summary, description, start_dt, end_dt, recipients)
+        except Exception as e:
+            print("Calendar error:", e)
+
         return """
-            <h2>Meeting Approved</h2>
-            <p>You have successfully approved this meeting request.</p>
+        <h2>Meeting Approved</h2>
+        <p>Thank you. The meeting has been approved and both parties were notified.</p>
         """
-    else:
+
+    # ----------------------------
+    # REJECT
+    # ----------------------------
+    if decision == "reject":
+
+        # Update DB
+        c.execute("UPDATE reservations SET status='Rejected' WHERE id=?", (reservation_id,))
+        conn.commit()
+
+        # Recipients
+        invites_list = [e.strip() for e in (reservation["invites"] or "").split(",") if e.strip()]
+        recipients = list(dict.fromkeys(invites_list + [reservation["requester_email"], reservation["target_email"]]))
+
+        # Email
+        subject = f"Meeting Request Rejected - {reservation['target_name']}"
+        body = (
+            f"Hello,\n\n"
+            f"Unfortunately, your meeting request with {reservation['target_name']} "
+            f"has been rejected.\n\n"
+            f"📅 Date: {reservation['date']}\n"
+            f"⏰ Time: {reservation['start_time']}\n\n"
+            f"Thank you,\nMcKinsey Electronics Team"
+        )
+
+        send_plain_email(", ".join(recipients), subject, body)
+
         return """
-            <h2>Meeting Declined</h2>
-            <p>You have declined this meeting request.</p>
+        <h2>Meeting Rejected</h2>
+        <p>The meeting has been declined and the requester has been notified.</p>
         """
 
 
