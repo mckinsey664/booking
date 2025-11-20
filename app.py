@@ -968,18 +968,49 @@ def reserve():
         # ----------------------------------------------------
         # Email to GUEST (invitee)
         # ----------------------------------------------------
-        subject_guest = f"Meeting Request from {email}"
-        body_guest = (
-            f"Dear {full_name},\n\n"
-            f"You have received a new meeting request.\n\n"
-            f"Date: {selected_date}\n"
-            f"Time: {chosen_time}\n"
-            f"Meeting Room: {free_room}\n"
-            f"Requested by: {email}\n\n"
-            f"To ACCEPT this meeting, click the link below:\n{approve_link}\n\n"
-            f"To DECLINE this meeting, click the link below:\n{reject_link}\n\n"
-        )
-        send_plain_email(target_email, subject_guest, body_guest)
+        # ----------------------------
+        # GOOGLE-CALENDAR STYLE EMAIL
+        # ----------------------------
+
+        html_guest = f"""
+        <div style='font-family:Arial,sans-serif;font-size:15px;color:#202124'>
+        <p>Dear {full_name},</p>
+
+        <p>
+            You have received a new meeting request from <b>{requester_full_name}</b> 
+            from <b>{selected_company}</b>.
+        </p>
+
+        <p><b>Date:</b> {pretty_date}<br>
+        <b>Time:</b> {pretty_time}<br>
+        <b>Meeting Room:</b> {free_room}<br>
+        <b>Requested by:</b> {email}</p>
+
+        <p>Please choose an option below:</p>
+
+        <div style="margin-top:20px;">
+            <a href="{approve_link}" 
+            style="background:#1a73e8;color:#fff;padding:12px 22px;
+              text-decoration:none;border-radius:6px;font-weight:bold;margin-right:10px;">
+            YES
+        </a>
+
+            <a href="{reject_link}" 
+       style="background:#d93025;color:#fff;padding:12px 22px;
+              text-decoration:none;border-radius:6px;font-weight:bold;">
+       NO
+    </a>
+  </div>
+
+  <br><br>
+  <p style="color:#5f6368;font-size:12px;">
+    This is an automated message from the McKinsey Electronics Booking System.
+  </p>
+</div>
+"""
+
+        send_html_email(target_email, subject_guest, html_guest)
+
 
         flash("✅ Meeting request submitted!", "success")
         return redirect(url_for("my_meetings"))
@@ -1038,6 +1069,23 @@ def reserve():
         available_times=available_times
     )
 
+def send_html_email(to_email, subject, html_body):
+    try:
+        msg = EmailMessage()
+        msg["Subject"] = subject
+        msg["From"] = SMTP_EMAIL
+        msg["To"] = to_email
+        msg.add_alternative(html_body, subtype="html")
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+            smtp.login(SMTP_EMAIL, SMTP_PASSWORD)
+            smtp.send_message(msg)
+
+        print(f"📧 HTML email sent to {to_email}")
+        return True
+    except Exception as e:
+        print("❌ HTML Email failed:", e)
+        return False
 
 
 ################################################################################################
