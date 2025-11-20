@@ -154,6 +154,23 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
+@app.route("/debug/schema")
+def debug_schema():
+    conn = get_db()
+    c = conn.cursor()
+
+    tables = c.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+
+    output = ""
+    for t in tables:
+        table_name = t[0]
+        output += f"\n===== {table_name} =====\n"
+        rows = c.execute(f"PRAGMA table_info({table_name})").fetchall()
+        for r in rows:
+            output += f"{r}\n"
+
+    return f"<pre>{output}</pre>"
+
 
 def admin_required(f):
     @wraps(f)
