@@ -938,7 +938,7 @@ def reserve():
         # Email to REQUESTER
         # ----------------------------------------------------
 
-        
+
         # Format date nicely: 2025-12-09 → 9 December 2025
         pretty_date = datetime.strptime(selected_date, "%Y-%m-%d").strftime("%-d %B %Y")
 
@@ -951,16 +951,18 @@ def reserve():
         # REQUESTER EMAIL
         requester_name = email.split("@")[0].split(".")[0].capitalize()  # better: fetch from DB if needed
 
+
         subject_requester = "Your Meeting Request Has Been Submitted"
+
         body_requester = (
-            f"Dear {email},\n\n"
-            f"Your meeting request with {full_name} has been successfully scheduled.\n\n"
-            f"Date: {selected_date}\n"
-            f"Time: {chosen_time}\n"
-            f"Meeting Room: {free_room}\n"
-            f"Requested by: you\n\n"
+            f"Dear {requester_name},\n\n"
+            f"Your meeting request with {full_name} from {selected_company} has been successfully scheduled.\n\n"
+            f"Date: {pretty_date}\n"
+            f"Time: {pretty_time}\n"
+            f"Meeting Room: {free_room}\n\n"
             f"Please wait for the guest's confirmation.\n"
         )
+
         send_plain_email(email, subject_requester, body_requester)
 
         # ----------------------------------------------------
