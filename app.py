@@ -254,10 +254,14 @@ def verify():
             session["email"] = email
             session.pop("code", None)
 
-            # 🔍 Check if this user is a company contact
+            # ✅ Mark the user as verified
             conn = get_db()
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
+            c.execute("UPDATE users SET verified = 1 WHERE email = ?", (email,))
+            conn.commit()
+
+            # 🔍 Check if this user is a company contact
             c.execute("SELECT company_id FROM company_contacts WHERE lower(email)=?", (email.lower(),))
             contact = c.fetchone()
             if contact:
