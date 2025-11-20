@@ -829,16 +829,15 @@ def reserve():
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
 
-    # Ensure user is an approved user
-    c.execute("SELECT id FROM approved_users WHERE lower(email)=?", (email,))
+    # Ensure user is approved
+    c.execute("SELECT id, first_name, last_name FROM approved_users WHERE lower(email)=?", (email,))
     user = c.fetchone()
     if not user:
         return redirect(url_for("login"))
     user_id = user["id"]
+    requester_full_name = f"{user['first_name']} {user['last_name']}"
 
-    # -----------------------------
-    # 1) Load companies dynamically
-    # -----------------------------
+    # Load companies
     companies = c.execute("""
         SELECT DISTINCT company_name 
         FROM approved_users
@@ -846,14 +845,11 @@ def reserve():
         ORDER BY company_name
     """).fetchall()
 
-    # GET parameters
     selected_company = request.args.get("company_name")
     entity_id = request.args.get("entity_id")
     selected_date = request.args.get("date")
 
-    # ----------------------------------------
-    # 2) Load people belonging to a company
-    # ----------------------------------------
+    # Load people
     people = []
     if selected_company:
         people = c.execute("""
@@ -863,9 +859,7 @@ def reserve():
             ORDER BY first_name, last_name
         """, (selected_company,)).fetchall()
 
-    # --------------------------
-    # 3) POST → Reserve a slot
-    # --------------------------
+    # POST – Reserve
     if request.method == "POST":
         chosen_time = request.form.get("time")
         slot_id = request.form.get("slot_id")
@@ -876,7 +870,7 @@ def reserve():
             flash("❌ Please select a person.", "danger")
             return redirect(url_for("reserve"))
 
-        # Check if slot already booked
+        # Check double booking
         c.execute("""
             SELECT id FROM reservations
             WHERE entity_type='person' AND entity_id=? 
@@ -906,11 +900,12 @@ def reserve():
                                     entity_id=entity_id,
                                     date=selected_date))
 
-        # Guest (target) info
+        # Target person (guest)
         person = c.execute("""
             SELECT first_name, last_name, email 
             FROM approved_users WHERE id=?
         """, (entity_id,)).fetchone()
+
         full_name = f"{person['first_name']} {person['last_name']}"
         target_email = person["email"]
 
@@ -925,37 +920,26 @@ def reserve():
         ))
         conn.commit()
 
-        # Reservation ID for approval links
         reservation_id = c.lastrowid
 
-        # ----------------------------------------------------
-        # YES / NO Approval Links (guest clicks from email)
-        # ----------------------------------------------------
+        # Links for YES / NO
         approve_link = f"https://mckinsey-booking-system.onrender.com/respond_meeting/{reservation_id}?decision=approve"
         reject_link = f"https://mckinsey-booking-system.onrender.com/respond_meeting/{reservation_id}?decision=reject"
 
-        # ----------------------------------------------------
-        # Email to REQUESTER
-        # ----------------------------------------------------
-
-
-        # Format date nicely: 2025-12-09 → 9 December 2025
+        # Format date
         pretty_date = datetime.strptime(selected_date, "%Y-%m-%d").strftime("%-d %B %Y")
 
-        # Format time nicely: 09:00 → 09:00 – 09:20 AM
         start_dt = datetime.strptime(chosen_time, "%H:%M")
         end_dt = start_dt + timedelta(minutes=20)
-
         pretty_time = start_dt.strftime("%I:%M") + " – " + end_dt.strftime("%I:%M %p")
 
-        # REQUESTER EMAIL
-        requester_name = email.split("@")[0].split(".")[0].capitalize()  # better: fetch from DB if needed
-
-
+        # -----------------------------
+        # EMAIL TO REQUESTER
+        # -----------------------------
         subject_requester = "Your Meeting Request Has Been Submitted"
 
         body_requester = (
-            f"Dear {requester_name},\n\n"
+            f"Dear {user['first_name']},\n\n"
             f"Your meeting request with {full_name} from {selected_company} has been successfully scheduled.\n\n"
             f"Date: {pretty_date}\n"
             f"Time: {pretty_time}\n"
@@ -965,83 +949,71 @@ def reserve():
 
         send_plain_email(email, subject_requester, body_requester)
 
-        # ----------------------------------------------------
-        # Email to GUEST (invitee)
-        # ----------------------------------------------------
-        # ----------------------------
-        # GOOGLE-CALENDAR STYLE EMAIL
-        # ----------------------------
+        # -----------------------------
+        # EMAIL TO GUEST (HTML)
+        # -----------------------------
+
+        subject_guest = "New Meeting Request – Action Required"
 
         html_guest = f"""
         <div style='font-family:Arial,sans-serif;font-size:15px;color:#202124'>
-        <p>Dear {full_name},</p>
+          <p>Dear {full_name},</p>
 
-        <p>
-            You have received a new meeting request from <b>{requester_full_name}</b> 
-            from <b>{selected_company}</b>.
-        </p>
+          <p>
+            You have received a new meeting request from 
+            <b>{requester_full_name}</b> from <b>{selected_company}</b>.
+          </p>
 
-        <p><b>Date:</b> {pretty_date}<br>
-        <b>Time:</b> {pretty_time}<br>
-        <b>Meeting Room:</b> {free_room}<br>
-        <b>Requested by:</b> {email}</p>
+          <p><b>Date:</b> {pretty_date}<br>
+             <b>Time:</b> {pretty_time}<br>
+             <b>Meeting Room:</b> {free_room}<br>
+             <b>Requested by:</b> {email}</p>
 
-        <p>Please choose an option below:</p>
+          <p>Please choose an option below:</p>
 
-        <div style="margin-top:20px;">
+          <div style="margin-top:20px;">
             <a href="{approve_link}" 
-            style="background:#1a73e8;color:#fff;padding:12px 22px;
-              text-decoration:none;border-radius:6px;font-weight:bold;margin-right:10px;">
-            YES
-        </a>
+               style="background:#1a73e8;color:#fff;padding:12px 22px;
+                      text-decoration:none;border-radius:6px;font-weight:bold;margin-right:10px;">
+               YES
+            </a>
 
             <a href="{reject_link}" 
-       style="background:#d93025;color:#fff;padding:12px 22px;
-              text-decoration:none;border-radius:6px;font-weight:bold;">
-       NO
-    </a>
-  </div>
+               style="background:#d93025;color:#fff;padding:12px 22px;
+                      text-decoration:none;border-radius:6px;font-weight:bold;">
+               NO
+            </a>
+          </div>
 
-  <br><br>
-  <p style="color:#5f6368;font-size:12px;">
-    This is an automated message from the McKinsey Electronics Booking System.
-  </p>
-</div>
-"""
+          <br><br>
+          <p style="color:#5f6368;font-size:12px;">
+            This is an automated message from the McKinsey Electronics Booking System.
+          </p>
+        </div>
+        """
 
         send_html_email(target_email, subject_guest, html_guest)
 
-
-        flash("✅ Meeting request submitted!", "success")
+        flash("Meeting request submitted!", "success")
         return redirect(url_for("my_meetings"))
 
     # -----------------------------
-    # 4) Build available times list
+    # BUILD 20-MIN SLOTS
     # -----------------------------
     available_times = []
     if entity_id and selected_date:
-        # 20-minute slots from 09:00 → 17:00
         start_minutes = 9 * 60
         end_minutes = 17 * 60
-        slot_counter = 0
         current = start_minutes
+        slot_counter = 0
 
         while current < end_minutes:
-            slot_start = current
-            slot_end = current + 20
-
-            if slot_end > end_minutes:
-                break
-
-            sh = slot_start // 60
-            sm = slot_start % 60
-            eh = slot_end // 60
-            em = slot_end % 60
+            sh, sm = divmod(current, 60)
+            eh, em = divmod(current + 20, 60)
 
             start_str = f"{sh:02d}:{sm:02d}"
             end_str = f"{eh:02d}:{em:02d}"
 
-            # Check booking
             taken = c.execute("""
                 SELECT 1 FROM reservations
                 WHERE entity_type='person' AND entity_id=? 
