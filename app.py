@@ -929,13 +929,20 @@ def reserve():
         # Format date
         pretty_date = datetime.strptime(selected_date, "%Y-%m-%d").strftime("%-d %B %Y")
 
-        subject_guest = build_invitation_subject(selected_date, start_dt.strftime("%H:%M"), end_dt.strftime("%H:%M"))
-        subject_requester = subject_guest
-
 
         start_dt = datetime.strptime(chosen_time, "%H:%M")
         end_dt = start_dt + timedelta(minutes=20)
         pretty_time = start_dt.strftime("%I:%M") + " – " + end_dt.strftime("%I:%M %p")
+
+        # Build Google-Calendar style subject
+        subject_guest = build_invitation_subject(
+            selected_date,
+            start_dt.strftime("%H:%M"),
+            end_dt.strftime("%H:%M")
+        )
+
+# requester gets the same subject
+        subject_requester = subject_guest
 
         # -----------------------------
         # EMAIL TO REQUESTER
