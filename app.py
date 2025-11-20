@@ -937,6 +937,20 @@ def reserve():
         # ----------------------------------------------------
         # Email to REQUESTER
         # ----------------------------------------------------
+
+        
+        # Format date nicely: 2025-12-09 → 9 December 2025
+        pretty_date = datetime.strptime(selected_date, "%Y-%m-%d").strftime("%-d %B %Y")
+
+        # Format time nicely: 09:00 → 09:00 – 09:20 AM
+        start_dt = datetime.strptime(chosen_time, "%H:%M")
+        end_dt = start_dt + timedelta(minutes=20)
+
+        pretty_time = start_dt.strftime("%I:%M") + " – " + end_dt.strftime("%I:%M %p")
+
+        # REQUESTER EMAIL
+        requester_name = email.split("@")[0].split(".")[0].capitalize()  # better: fetch from DB if needed
+
         subject_requester = "Your Meeting Request Has Been Submitted"
         body_requester = (
             f"Dear {email},\n\n"
