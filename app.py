@@ -1565,6 +1565,9 @@ def my_meetings():
     user = c.fetchone()
     if not user:
         return redirect(url_for("login"))
+    
+    user_id = user["id"]
+
 
 
     # Fetch meetings:
