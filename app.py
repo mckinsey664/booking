@@ -489,6 +489,34 @@ def verify():
 #     )
 
 
+def get_company_list():
+    """Fetch all companies from DSS Company Names sheet."""
+    sh = gc.open_by_key(SHEET_ID)
+    ws = sh.worksheet("DSS Company Names")
+    rows = ws.get_all_records()  # auto uses header row
+
+    companies = []
+    for row in rows:
+        companies.append({
+            "code": row["Company Code"],
+            "name": row["Company Name"]
+        })
+    return companies
+
+
+def get_company_contacts(company_code):
+    """Fetch all emails for a specific company code."""
+    sh = gc.open_by_key(SHEET_ID)
+    ws = sh.worksheet("DSS Contacts linked to Companies")
+    rows = ws.get_all_records()
+
+    contacts = []
+    for row in rows:
+        if row["Company Code"] == company_code:
+            contacts.append(row["Contacts Email"])
+    return contacts
+
+
 @app.route("/reserve", methods=["GET", "POST"])
 @verified_required
 def reserve():
@@ -1812,6 +1840,82 @@ def cancel_meeting(meeting_id):
 
     flash("🗑️ Meeting cancelled successfully.", "success")
     return redirect(url_for("my_meetings"))
+
+
+
+def import_companies_and_contacts():
+    sh = gc.open_by_key(SHEET_ID)
+    
+    # Load companies sheet
+    ws_companies = sh.worksheet("DSS Company Names")
+    rows_companies = ws_companies.get_all_records()
+    
+    # Load contacts sheet
+    ws_contacts = sh.worksheet("DSS Contacts linked to Companies")
+    rows_contacts = ws_contacts.get_all_records()
+
+    conn = get_db()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+
+    # 1️⃣ Import Companies
+    company_map = {}  # company_code → id in DB
+    
+    for row in rows_companies:
+        code = row["Company Code"]
+        name = row["Company Name"].strip()
+
+        # Insert OR IGNORE (avoid duplicates)
+        c.execute("""
+            INSERT OR IGNORE INTO companies(id, name, description)
+            VALUES (?, ?, '')
+        """, (code, name))
+        
+        company_map[code] = code  # DB id = code (we keep same ID)
+
+    # 2️⃣ Import Contacts
+    for row in rows_contacts:
+        code = row["Company Code"]
+        email = row["Contacts Email"].strip().lower()
+
+        if code not in company_map:
+            continue  # skip unknown company
+
+        c.execute("""
+            INSERT OR IGNORE INTO company_contacts(company_id, email)
+            VALUES (?, ?)
+        """, (code, email))
+
+    conn.commit()
+    conn.close()
+    print("✅ Companies & Contacts Imported Successfully")
+
+@app.route("/admin/import_companies", methods=["POST"])
+@admin_required
+def admin_import_companies():
+    import_companies_and_contacts()
+    flash("✅ Companies & contacts imported successfully!", "success")
+    return redirect(url_for("admin_companies"))
+
+@app.route("/admin/clear_approved_users", methods=["POST"])
+def clear_approved_users():
+    conn = get_db()
+    c = conn.cursor()
+
+    # Delete all rows
+    c.execute("DELETE FROM approved_users")
+
+    # Reset auto-increment counter (optional but recommended)
+    c.execute("DELETE FROM sqlite_sequence WHERE name='approved_users'")
+
+    conn.commit()
+    conn.close()
+
+    flash("✅ All approved users have been deleted successfully.", "success")
+    return redirect(url_for("admin_users"))
+
+
+
 
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=5000, debug=True)
