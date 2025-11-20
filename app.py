@@ -489,33 +489,161 @@ def verify():
 #     )
 
 
-def get_company_list():
-    """Fetch all companies from DSS Company Names sheet."""
-    sh = gc.open_by_key(SHEET_ID)
-    ws = sh.worksheet("DSS Company Names")
-    rows = ws.get_all_records()  # auto uses header row
+# @app.route("/reserve", methods=["GET", "POST"])
+# @verified_required
+# def reserve():
+#     email = session.get("email")
+#     conn = get_db()
+#     conn.row_factory = sqlite3.Row
+#     c = conn.cursor()
 
-    companies = []
-    for row in rows:
-        companies.append({
-            "code": row["Company Code"],
-            "name": row["Company Name"]
-        })
-    return companies
+#     # Ensure user is an approved user
+#     c.execute("SELECT id FROM approved_users WHERE lower(email)=?", (email,))
+#     user = c.fetchone()
+#     if not user:
+#         return redirect(url_for("login"))
+#     user_id = user["id"]
 
+#     # -----------------------------
+#     # 1) Load companies dynamically
+#     # -----------------------------
+#     companies = c.execute("""
+#         SELECT DISTINCT company_name 
+#         FROM approved_users
+#         WHERE company_name IS NOT NULL AND company_name <> ''
+#         ORDER BY company_name
+#     """).fetchall()
 
-def get_company_contacts(company_code):
-    """Fetch all emails for a specific company code."""
-    sh = gc.open_by_key(SHEET_ID)
-    ws = sh.worksheet("DSS Contacts linked to Companies")
-    rows = ws.get_all_records()
+#     # GET parameters
+#     selected_company = request.args.get("company_name")
+#     entity_id = request.args.get("entity_id")
+#     selected_date = request.args.get("date")
 
-    contacts = []
-    for row in rows:
-        if row["Company Code"] == company_code:
-            contacts.append(row["Contacts Email"])
-    return contacts
+#     # ----------------------------------------
+#     # 2) Load people belonging to a company
+#     # ----------------------------------------
+#     people = []
+#     if selected_company:
+#         people = c.execute("""
+#             SELECT id, first_name, last_name, email 
+#             FROM approved_users
+#             WHERE company_name = ?
+#             ORDER BY first_name, last_name
+#         """, (selected_company,)).fetchall()
 
+#     # --------------------------
+#     # 3) POST → Reserve a slot
+#     # --------------------------
+#     if request.method == "POST":
+#         chosen_time = request.form.get("time")
+#         slot_id = request.form.get("slot_id")
+#         entity_id = request.form.get("entity_id")
+#         selected_date = request.form.get("date")
+#         entity_type = "person"   # always person now
+
+#         if not entity_id:
+#             flash("❌ Please select a person.", "danger")
+#             return redirect(url_for("reserve"))
+
+#         # Already booked?
+#         c.execute("""
+#             SELECT id FROM reservations
+#             WHERE entity_type='person' AND entity_id=? 
+#               AND date=? AND start_time=? 
+#               AND status IN ('Pending', 'Approved')
+#         """, (entity_id, selected_date, chosen_time))
+#         if c.fetchone():
+#             flash("❌ This slot is already booked.", "danger")
+#             return redirect(url_for("reserve", company_name=selected_company, entity_id=entity_id, date=selected_date))
+
+#         # Assign room
+#         rooms = [r["name"] for r in c.execute("SELECT name FROM rooms").fetchall()]
+#         c.execute("""
+#             SELECT room_name FROM reservations 
+#             WHERE date=? AND start_time=? AND status IN ('Pending','Approved')
+#         """, (selected_date, chosen_time))
+#         taken = [row["room_name"] for row in c.fetchall()]
+#         free_room = next((r for r in rooms if r not in taken), None)
+
+#         if not free_room:
+#             flash("❌ No rooms left at this time.", "danger")
+#             return redirect(url_for("reserve", company_name=selected_company, entity_id=entity_id, date=selected_date))
+
+#         # Get invited person info
+#         person = c.execute("""
+#             SELECT first_name, last_name, email 
+#             FROM approved_users WHERE id=?
+#         """, (entity_id,)).fetchone()
+#         full_name = f"{person['first_name']} {person['last_name']}"
+#         target_email = person["email"]
+
+#         invites_str = f"{email},{target_email}"
+
+#         # Save reservation
+#         c.execute("""
+#             INSERT INTO reservations 
+#             (user_id, entity_type, entity_id, date, start_time, room_name, invites, status, slot_id)
+#             VALUES (?,?,?,?,?,?,?,?,?)
+#         """, (
+#             user_id, "person", entity_id, selected_date,
+#             chosen_time, free_room, invites_str, "Pending", slot_id
+#         ))
+#         conn.commit()
+
+#         # Email
+#         subject = f"Meeting Request with {full_name}"
+#         body = (
+#             f"Hello,\n\nA meeting has been requested with {full_name}.\n\n"
+#             f"📅 Date: {selected_date}\n"
+#             f"⏰ Time: {chosen_time}\n"
+#             f"👤 Person: {full_name}\n"
+#             f"🏠 Room: {free_room}\n\n"
+#             f"Requested by: {email}\n"
+#         )
+#         send_plain_email(f"{email},{target_email}", subject, body)
+
+#         flash("✅ Meeting request submitted!", "success")
+#         return redirect(url_for("my_meetings"))
+
+#     # -----------------------------
+#     # 4) Build available times list
+#     # -----------------------------
+#     available_times = []
+#     if entity_id and selected_date:
+#         # Fixed 30-min slots from 10:00 → 14:30
+#         start_hour = 10
+#         end_hour = 15
+#         slot_counter = 0
+#         for hour in range(start_hour, end_hour):
+#             for minute in (0, 30):
+#                 if hour == 14 and minute == 30:
+#                     continue
+#                 t = f"{hour:02d}:{minute:02d}"
+
+#                 # Check booking
+#                 taken = c.execute("""
+#                     SELECT 1 FROM reservations
+#                     WHERE entity_type='person' AND entity_id=? 
+#                       AND date=? AND start_time=?
+#                       AND status IN ('Pending','Approved')
+#                 """, (entity_id, selected_date, t)).fetchone()
+
+#                 if not taken:
+#                     slot_counter += 1
+#                     available_times.append({
+#                         "time": t,
+#                         "slot_id": f"p{slot_counter}"
+#                     })
+
+#     return render_template(
+#         "reserve.html",
+#         companies=companies,
+#         people=people,
+#         selected_company=selected_company,
+#         selected_date=selected_date,
+#         entity_id=entity_id,
+#         available_times=available_times
+#     )
 
 @app.route("/reserve", methods=["GET", "POST"])
 @verified_required
@@ -525,66 +653,42 @@ def reserve():
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
 
-    # Ensure user is an approved user
+    # ✅ Only logged-in approved users can reserve
     c.execute("SELECT id FROM approved_users WHERE lower(email)=?", (email,))
     user = c.fetchone()
     if not user:
         return redirect(url_for("login"))
-    user_id = user["id"]
 
-    # -----------------------------
-    # 1) Load companies dynamically
-    # -----------------------------
-    companies = c.execute("""
-        SELECT DISTINCT company_name 
-        FROM approved_users
-        WHERE company_name IS NOT NULL AND company_name <> ''
-        ORDER BY company_name
-    """).fetchall()
-
-    # GET parameters
-    selected_company = request.args.get("company_name")
+    # ---- Get URL params
+    entity_type = request.args.get("entity_type") or "company"
     entity_id = request.args.get("entity_id")
     selected_date = request.args.get("date")
 
-    # ----------------------------------------
-    # 2) Load people belonging to a company
-    # ----------------------------------------
-    people = []
-    if selected_company:
-        people = c.execute("""
-            SELECT id, first_name, last_name, email 
-            FROM approved_users
-            WHERE company_name = ?
-            ORDER BY first_name, last_name
-        """, (selected_company,)).fetchall()
-
-    # --------------------------
-    # 3) POST → Reserve a slot
-    # --------------------------
+    # ---- POST: User picked a slot to reserve
     if request.method == "POST":
-        chosen_time = request.form.get("time")
+        chosen_time = request.form.get("time")          # start time (HH:MM)
         slot_id = request.form.get("slot_id")
         entity_id = request.form.get("entity_id")
         selected_date = request.form.get("date")
-        entity_type = "person"   # always person now
+        entity_type = request.form.get("entity_type") or "company"
 
-        if not entity_id:
-            flash("❌ Please select a person.", "danger")
-            return redirect(url_for("reserve"))
-
-        # Already booked?
-        c.execute("""
-            SELECT id FROM reservations
-            WHERE entity_type='person' AND entity_id=? 
-              AND date=? AND start_time=? 
-              AND status IN ('Pending', 'Approved')
-        """, (entity_id, selected_date, chosen_time))
+        # ✅ Check if this specific slot_id or time is already booked
+        if entity_type == "company":
+            c.execute("""
+                SELECT id FROM reservations
+                WHERE slot_id=? AND status IN ('Pending','Approved')
+            """, (slot_id,))
+        else:
+            c.execute("""
+                SELECT id FROM reservations
+                WHERE entity_type='person' AND entity_id=? AND date=? AND start_time=?
+                      AND status IN ('Pending','Approved')
+            """, (entity_id, selected_date, chosen_time))
         if c.fetchone():
-            flash("❌ This slot is already booked.", "danger")
-            return redirect(url_for("reserve", company_name=selected_company, entity_id=entity_id, date=selected_date))
+            flash("❌ This specific slot is already booked.", "danger")
+            return redirect(url_for("reserve", entity_type=entity_type, entity_id=entity_id, date=selected_date))
 
-        # Assign room
+        # ✅ Assign first available room
         rooms = [r["name"] for r in c.execute("SELECT name FROM rooms").fetchall()]
         c.execute("""
             SELECT room_name FROM reservations 
@@ -594,83 +698,164 @@ def reserve():
         free_room = next((r for r in rooms if r not in taken), None)
 
         if not free_room:
-            flash("❌ No rooms left at this time.", "danger")
-            return redirect(url_for("reserve", company_name=selected_company, entity_id=entity_id, date=selected_date))
+            flash("❌ No rooms left at this time. Please choose another time.", "danger")
+            return redirect(url_for("reserve", entity_type=entity_type, entity_id=entity_id, date=selected_date))
 
-        # Get invited person info
-        person = c.execute("""
-            SELECT first_name, last_name, email 
-            FROM approved_users WHERE id=?
-        """, (entity_id,)).fetchone()
-        full_name = f"{person['first_name']} {person['last_name']}"
-        target_email = person["email"]
+        # ✅ Build meeting details depending on type
+        if entity_type == "company":
+            company = c.execute("SELECT name FROM companies WHERE id=?", (entity_id,)).fetchone()
+            if not company:
+                flash("❌ Company not found.", "danger")
+                return redirect(url_for("reserve"))
+            company_name = company["name"]
 
-        invites_str = f"{email},{target_email}"
+            # ✅ Fetch company contacts
+            contacts = c.execute(
+                "SELECT email FROM company_contacts WHERE company_id=?",
+                (entity_id,)
+            ).fetchall()
+            company_emails = [row["email"] for row in contacts]
 
-        # Save reservation
-        c.execute("""
-            INSERT INTO reservations 
-            (user_id, entity_type, entity_id, date, start_time, room_name, invites, status, slot_id)
-            VALUES (?,?,?,?,?,?,?,?,?)
-        """, (
-            user_id, "person", entity_id, selected_date,
-            chosen_time, free_room, invites_str, "Pending", slot_id
-        ))
-        conn.commit()
+            recipients = list(set([email] + company_emails))
+            invites_str = ",".join(recipients)
 
-        # Email
-        subject = f"Meeting Request with {full_name}"
-        body = (
-            f"Hello,\n\nA meeting has been requested with {full_name}.\n\n"
-            f"📅 Date: {selected_date}\n"
-            f"⏰ Time: {chosen_time}\n"
-            f"👤 Person: {full_name}\n"
-            f"🏠 Room: {free_room}\n\n"
-            f"Requested by: {email}\n"
-        )
-        send_plain_email(f"{email},{target_email}", subject, body)
+            # ✅ Save reservation
+            c.execute("""
+                INSERT INTO reservations (user_id, entity_type, entity_id, date, start_time, room_name, invites, status, slot_id)
+                VALUES (?,?,?,?,?,?,?,?,?)
+            """, (
+                user["id"], "company", entity_id, selected_date,
+                chosen_time, free_room, invites_str, "Pending", slot_id
+            ))
+            conn.commit()
 
-        flash("✅ Meeting request submitted!", "success")
+            subject = f"Meeting Request with {company_name}"
+            body = (
+                f"Hello,\n\nA meeting has been requested with {company_name}.\n\n"
+                f"📅 Date: {selected_date}\n"
+                f"⏰ Time: {chosen_time}\n"
+                f"🏢 Company: {company_name}\n"
+                f"🏠 Room: {free_room}\n\n"
+                f"Requested by: {email}\n"
+            )
+
+        elif entity_type == "person":
+            person = c.execute("""
+                SELECT first_name, last_name, email FROM approved_users WHERE id=?
+            """, (entity_id,)).fetchone()
+            if not person:
+                flash("❌ Person not found.", "danger")
+                return redirect(url_for("reserve"))
+            full_name = f"{person['first_name']} {person['last_name']}"
+            person_email = person["email"]
+
+            # ✅ Save reservation
+            c.execute("""
+                INSERT INTO reservations (user_id, entity_type, entity_id, date, start_time, room_name, invites, status, slot_id)
+                VALUES (?,?,?,?,?,?,?,?,?)
+            """, (
+                user["id"], "person", entity_id, selected_date,
+                chosen_time, free_room, f"{email},{person_email}", "Pending", slot_id
+            ))
+            conn.commit()
+
+            recipients = list(set([email, person_email]))
+            subject = f"Meeting Request with {full_name}"
+            body = (
+                f"Hello,\n\nA meeting has been requested with {full_name}.\n\n"
+                f"📅 Date: {selected_date}\n"
+                f"⏰ Time: {chosen_time}\n"
+                f"👤 Person: {full_name}\n"
+                f"🏠 Room: {free_room}\n\n"
+                f"Requested by: {email}\n"
+            )
+
+        # ✅ Send confirmation email
+        to_field = ", ".join(recipients)
+        send_plain_email(to_field, subject, body)
+        flash(f"✅ Meeting request sent successfully!", "success")
         return redirect(url_for("my_meetings"))
 
-    # -----------------------------
-    # 4) Build available times list
-    # -----------------------------
+    # ---- GET: Build available times ----
     available_times = []
     if entity_id and selected_date:
-        # Fixed 30-min slots from 10:00 → 14:30
-        start_hour = 10
-        end_hour = 15
-        slot_counter = 0
-        for hour in range(start_hour, end_hour):
-            for minute in (0, 30):
-                if hour == 14 and minute == 30:
-                    continue
-                t = f"{hour:02d}:{minute:02d}"
+        if entity_type == "company":
+            # Company slots from admin-defined table
+            c.execute("""
+                SELECT id, start_time, end_time FROM company_slots
+                WHERE company_id=? AND date=? ORDER BY start_time
+            """, (entity_id, selected_date))
+            slots = c.fetchall()
 
-                # Check booking
+            for s in slots:
+                reserved = c.execute("""
+                    SELECT 1 FROM reservations
+                    WHERE slot_id=? AND status IN ('Pending','Approved')
+                """, (s["id"],)).fetchone()
+                if not reserved:
+                    available_times.append({
+                        "start": s["start_time"],
+                        "end": s["end_time"],
+                        "slot_id": s["id"]
+                    })
+
+        elif entity_type == "person":
+            # ✅ NEW: Default 20-minute slots from 09:00 → 17:00
+            start_minutes = 9 * 60          # 09:00
+            end_minutes = 17 * 60           # 17:00
+            slot_counter = 0
+            current = start_minutes
+
+            while current < end_minutes:
+                slot_start = current
+                slot_end = current + 20     # 20 minutes
+
+                if slot_end > end_minutes:
+                    break  # safety, but with 20-min steps it ends exactly at 17:00
+
+                sh = slot_start // 60
+                sm = slot_start % 60
+                eh = slot_end // 60
+                em = slot_end % 60
+
+                start_str = f"{sh:02d}:{sm:02d}"
+                end_str = f"{eh:02d}:{em:02d}"
+
                 taken = c.execute("""
                     SELECT 1 FROM reservations
-                    WHERE entity_type='person' AND entity_id=? 
-                      AND date=? AND start_time=?
+                    WHERE entity_type='person' AND entity_id=? AND date=? AND start_time=?
                       AND status IN ('Pending','Approved')
-                """, (entity_id, selected_date, t)).fetchone()
+                """, (entity_id, selected_date, start_str)).fetchone()
 
                 if not taken:
                     slot_counter += 1
                     available_times.append({
-                        "time": t,
+                        "start": start_str,
+                        "end": end_str,
                         "slot_id": f"p{slot_counter}"
                     })
 
+                current += 20
+
+    # ---- Display label for search box ----
+    display_label = None
+    if entity_id:
+        if entity_type == "company":
+            row = c.execute("SELECT name FROM companies WHERE id=?", (entity_id,)).fetchone()
+            if row:
+                display_label = row["name"]
+        else:
+            row = c.execute("SELECT first_name, last_name FROM approved_users WHERE id=?", (entity_id,)).fetchone()
+            if row:
+                display_label = f"{row['first_name']} {row['last_name']}"
+
     return render_template(
         "reserve.html",
-        companies=companies,
-        people=people,
-        selected_company=selected_company,
-        selected_date=selected_date,
+        entity_type=entity_type,
         entity_id=entity_id,
-        available_times=available_times
+        selected_date=selected_date,
+        available_times=available_times,
+        display_label=display_label
     )
 
 
