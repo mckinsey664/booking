@@ -20,10 +20,7 @@
       padding: 40px 20px;
     }
 
-    .logo {
-      max-width: 220px;
-      margin-bottom: 25px;
-    }
+    .logo { max-width: 220px; margin-bottom: 25px; }
 
     .form-card {
       background: #fff;
@@ -56,173 +53,126 @@
       margin-bottom: 10px;
       font-size: 18px;
       font-weight: 500;
-      text-decoration: none;
-      transition: all 0.2s;
+      transition: 0.2s;
     }
     .time-slot:hover { background: #CF6000; color: #fff; }
-
-    #suggestions {
-      position: absolute;
-      background: #fff;
-      color: #000;
-      width: 100%;
-      z-index: 999;
-      border-radius: 4px;
-      max-height: 200px;
-      overflow: auto;
-    }
-    #suggestions div { padding: 8px; cursor: pointer; }
-    #suggestions div:hover { background: #eee; }
   </style>
 </head>
 <body>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- ✅ Burger Menu -->
-  <nav class="navbar navbar-dark bg-dark fixed-top">
-    <div class="container-fluid">
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#userMenu"
-              aria-controls="userMenu" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="userMenu">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('reserve') }}">Reserve</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('my_meetings') }}">My Meetings</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('person_requests') }}">Requests For Me</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link text-danger" href="{{ url_for('logout') }}">Logout</a>
-          </li>
-
-        </ul>
-      </div>
+<nav class="navbar navbar-dark bg-dark fixed-top">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#userMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="userMenu">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('reserve') }}">Reserve</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('my_meetings') }}">My Meetings</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('person_requests') }}">Requests For Me</a></li>
+        <li class="nav-item"><a class="nav-link text-danger" href="{{ url_for('logout') }}">Logout</a></li>
+      </ul>
     </div>
-  </nav>
+  </div>
+</nav>
 
-  <img src="{{ url_for('static', filename='logo.png') }}" class="logo" alt="Company Logo">
-  <h3 class="mb-4 text-center">Reserve a Meeting Slot</h3>
+<img src="{{ url_for('static', filename='logo.png') }}" class="logo">
 
-  <!-- SEARCH + DATE FORM -->
-  <form method="get" class="form-card mb-4 position-relative">
-    <label class="form-label">Search for Company</label>
-    <input type="text"
-       id="searchBox"
-       name="search_label"
-       class="form-control"
-       placeholder="Type company name..."
-       value="{{ display_label or '' }}"
-       autocomplete="off">
-    <div id="suggestions"></div>
-    <input type="hidden" name="entity_type" id="entityType" value="{{ entity_type or '' }}">
-    <input type="hidden" name="entity_id" id="entityId" value="{{ entity_id or '' }}">
+<h3 class="mb-4 text-center">Reserve a Meeting Slot</h3>
 
+<!-- MAIN FORM -->
+<form method="get" class="form-card mb-4">
+
+  <!-- COMPANY DROPDOWN -->
+  <label class="form-label">Select Company</label>
+  <select name="company_name" class="form-select" onchange="this.form.submit()">
+    <option value="">Choose company...</option>
+    {% for c in companies %}
+      <option value="{{ c['company_name'] }}"
+        {% if selected_company == c['company_name'] %}selected{% endif %}>
+        {{ c['company_name'] }}
+      </option>
+    {% endfor %}
+  </select>
+
+  {% if selected_company %}
+    <!-- PEOPLE DROPDOWN -->
     <div class="mt-3">
-      <label class="form-label">Select Date</label>
-      <select name="date" class="form-select" required>
-        <option value="">Choose...</option>
-        <option value="2025-12-09" {% if selected_date=='2025-12-09' %}selected{% endif %}>December 9, 2025</option>
-        <option value="2025-12-10" {% if selected_date=='2025-12-10' %}selected{% endif %}>December 10, 2025</option>
+      <label class="form-label">Select Person</label>
+      <select name="entity_id" class="form-select" required>
+        <option value="">Choose person...</option>
+        {% for p in people %}
+          <option value="{{ p['id'] }}"
+            {% if entity_id and entity_id|int == p['id'] %}selected{% endif %}>
+            {{ p['first_name'] }} {{ p['last_name'] }} ({{ p['email'] }})
+          </option>
+        {% endfor %}
       </select>
     </div>
-
-    <button class="btn btn-brand w-100 text-white mt-3">Show Available Times</button>
-  </form>
-
-  <!-- TIME SLOTS -->
-  {% if available_times %}
-    <div class="form-card">
-      <h5 class="mb-3 text-center">Select a Time Slot</h5>
-      <form method="post">
-        <input type="hidden" name="entity_type" value="{{ entity_type }}">
-        <input type="hidden" name="entity_id" value="{{ entity_id }}">
-        <input type="hidden" name="date" value="{{ selected_date }}">
-        <input type="hidden" name="slot_id" id="slotId">
-        <input type="hidden" name="time" id="chosenTime">
-
-        <div id="timeOptions">
-{% for s in available_times %}
-  <a href="#" 
-     class="time-slot" 
-     data-slot-id="{{ s['slot_id'] }}"
-     data-start-time="{{ s['time'] }}">
-     {{ s['time'] }}
-  </a>
-{% endfor %}
-
-
-        </div>
-
-        <button type="submit" id="reserveBtn" class="btn btn-brand w-100 text-white" disabled>
-          Reserve Slot
-        </button>
-      </form>
-    </div>
-  {% elif entity_id and selected_date %}
-    <p class="text-muted text-center">No available times left.</p>
   {% endif %}
 
-  <!-- ✅ Updated JS -->
-  <script>
-    // Add event listeners to time slots
-    document.addEventListener('DOMContentLoaded', function() {
-      document.querySelectorAll('.time-slot').forEach(slot => {
-        slot.addEventListener('click', function(e) {
-          e.preventDefault();
-          const id = this.getAttribute('data-slot-id');
-          const time = this.getAttribute('data-start-time');
-          chooseSlot(id, time);
+  <div class="mt-3">
+    <label class="form-label">Select Date</label>
+    <select name="date" class="form-select" required>
+      <option value="">Choose...</option>
+      <option value="2025-12-09" {% if selected_date=='2025-12-09' %}selected{% endif %}>December 9, 2025</option>
+      <option value="2025-12-10" {% if selected_date=='2025-12-10' %}selected{% endif %}>December 10, 2025</option>
+    </select>
+  </div>
+
+  <button class="btn btn-brand w-100 text-white mt-3">Show Available Times</button>
+</form>
+
+
+<!-- TIME SLOT SELECTION -->
+{% if available_times %}
+  <div class="form-card">
+    <h5 class="mb-3 text-center">Select a Time Slot</h5>
+
+    <form method="post">
+      <input type="hidden" name="entity_id" value="{{ entity_id }}">
+      <input type="hidden" name="date" value="{{ selected_date }}">
+      <input type="hidden" name="slot_id" id="slotId">
+      <input type="hidden" name="time" id="chosenTime">
+
+      {% for s in available_times %}
+        <a href="#" class="time-slot"
+           data-slot-id="{{ s['slot_id'] }}"
+           data-start-time="{{ s['time'] }}">
+          {{ s['time'] }}
+        </a>
+      {% endfor %}
+
+      <button type="submit" id="reserveBtn" class="btn btn-brand w-100 text-white" disabled>
+        Reserve Slot
+      </button>
+    </form>
+  </div>
+{% endif %}
+
+
+<script>
+  // Time slot selection
+  document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll(".time-slot").forEach(slot => {
+      slot.addEventListener("click", function(e) {
+        e.preventDefault();
+        document.querySelectorAll(".time-slot").forEach(el => {
+          el.style.background = "#f8f9fa";
+          el.style.color = "#000";
         });
+        this.style.background = "#CF6000";
+        this.style.color = "#fff";
+
+        document.getElementById("slotId").value = this.dataset.slotId;
+        document.getElementById("chosenTime").value = this.dataset.startTime;
+        document.getElementById("reserveBtn").disabled = false;
       });
     });
+  });
+</script>
 
-    function chooseSlot(id, time) {
-      document.querySelectorAll('.time-slot').forEach(el=>{
-        el.style.background='#f8f9fa';
-        el.style.color='#000';
-      });
-      const selected = Array.from(document.querySelectorAll('.time-slot'))
-                            .find(el => el.getAttribute('data-start-time') === time);
-      if (selected) {
-        selected.style.background='#CF6000';
-        selected.style.color='#fff';
-      }
-      document.getElementById('chosenTime').value = time;
-      document.getElementById('slotId').value = id;
-      document.getElementById('reserveBtn').disabled = false;
-    }
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    const box=document.getElementById('searchBox');
-    const sug=document.getElementById('suggestions');
-    let timeout=null;
-
-    box.addEventListener('input',()=>{
-      clearTimeout(timeout);
-      const val=box.value.trim();
-      if(!val){sug.innerHTML='';return;}
-      timeout=setTimeout(()=>{
-        fetch(`/search_entities?q=${encodeURIComponent(val)}`)
-          .then(r=>r.json()).then(data=>{
-            sug.innerHTML='';
-            data.forEach(it=>{
-              const div=document.createElement('div');
-              div.textContent=it.label;
-              div.onclick=()=>{
-                box.value=it.label;
-                document.getElementById('entityType').value=it.type;
-                document.getElementById('entityId').value=it.id;
-                sug.innerHTML='';
-              };
-              sug.appendChild(div);
-            });
-          });
-      },300);
-    });
-  </script>
 </body>
 </html>
