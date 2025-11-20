@@ -645,6 +645,182 @@ def verify():
 #         available_times=available_times
 #     )
 
+# @app.route("/reserve", methods=["GET", "POST"])
+# @verified_required
+# def reserve():
+#     email = session.get("email")
+#     conn = get_db()
+#     conn.row_factory = sqlite3.Row
+#     c = conn.cursor()
+
+#     # Ensure user is an approved user
+#     c.execute("SELECT id FROM approved_users WHERE lower(email)=?", (email,))
+#     user = c.fetchone()
+#     if not user:
+#         return redirect(url_for("login"))
+#     user_id = user["id"]
+
+#     # -----------------------------
+#     # 1) Load companies dynamically
+#     # -----------------------------
+#     companies = c.execute("""
+#         SELECT DISTINCT company_name 
+#         FROM approved_users
+#         WHERE company_name IS NOT NULL AND company_name <> ''
+#         ORDER BY company_name
+#     """).fetchall()
+
+#     # GET parameters
+#     selected_company = request.args.get("company_name")
+#     entity_id = request.args.get("entity_id")
+#     selected_date = request.args.get("date")
+
+#     # ----------------------------------------
+#     # 2) Load people belonging to a company
+#     # ----------------------------------------
+#     people = []
+#     if selected_company:
+#         people = c.execute("""
+#             SELECT id, first_name, last_name, email 
+#             FROM approved_users
+#             WHERE company_name = ?
+#             ORDER BY first_name, last_name
+#         """, (selected_company,)).fetchall()
+
+#     # --------------------------
+#     # 3) POST → Reserve a slot
+#     # --------------------------
+#     if request.method == "POST":
+#         chosen_time = request.form.get("time")      # start time (HH:MM)
+#         slot_id = request.form.get("slot_id")
+#         entity_id = request.form.get("entity_id")
+#         selected_date = request.form.get("date")
+#         entity_type = "person"   # always person now
+
+#         if not entity_id:
+#             flash("❌ Please select a person.", "danger")
+#             return redirect(url_for("reserve"))
+
+#         # Already booked?
+#         c.execute("""
+#             SELECT id FROM reservations
+#             WHERE entity_type='person' AND entity_id=? 
+#               AND date=? AND start_time=? 
+#               AND status IN ('Pending', 'Approved')
+#         """, (entity_id, selected_date, chosen_time))
+#         if c.fetchone():
+#             flash("❌ This slot is already booked.", "danger")
+#             return redirect(url_for("reserve",
+#                                     company_name=selected_company,
+#                                     entity_id=entity_id,
+#                                     date=selected_date))
+
+#         # Assign room
+#         rooms = [r["name"] for r in c.execute("SELECT name FROM rooms").fetchall()]
+#         c.execute("""
+#             SELECT room_name FROM reservations 
+#             WHERE date=? AND start_time=? AND status IN ('Pending','Approved')
+#         """, (selected_date, chosen_time))
+#         taken = [row["room_name"] for row in c.fetchall()]
+#         free_room = next((r for r in rooms if r not in taken), None)
+
+#         if not free_room:
+#             flash("❌ No rooms left at this time.", "danger")
+#             return redirect(url_for("reserve",
+#                                     company_name=selected_company,
+#                                     entity_id=entity_id,
+#                                     date=selected_date))
+
+#         # Get invited person info
+#         person = c.execute("""
+#             SELECT first_name, last_name, email 
+#             FROM approved_users WHERE id=?
+#         """, (entity_id,)).fetchone()
+#         full_name = f"{person['first_name']} {person['last_name']}"
+#         target_email = person["email"]
+
+#         invites_str = f"{email},{target_email}"
+
+#         # Save reservation
+#         c.execute("""
+#             INSERT INTO reservations 
+#             (user_id, entity_type, entity_id, date, start_time, room_name, invites, status, slot_id)
+#             VALUES (?,?,?,?,?,?,?,?,?)
+#         """, (
+#             user_id, "person", entity_id, selected_date,
+#             chosen_time, free_room, invites_str, "Pending", slot_id
+#         ))
+#         conn.commit()
+
+#         # Email
+#         subject = f"Meeting Request with {full_name}"
+#         body = (
+#             f"Hello,\n\nA meeting has been requested with {full_name}.\n\n"
+#             f"📅 Date: {selected_date}\n"
+#             f"⏰ Time: {chosen_time}\n"
+#             f"👤 Person: {full_name}\n"
+#             f"🏠 Room: {free_room}\n\n"
+#             f"Requested by: {email}\n"
+#         )
+#         send_plain_email(f"{email},{target_email}", subject, body)
+
+#         flash("✅ Meeting request submitted!", "success")
+#         return redirect(url_for("my_meetings"))
+
+#     # -----------------------------
+#     # 4) Build available times list
+#     # -----------------------------
+#     available_times = []
+#     if entity_id and selected_date:
+#         # ✅ NEW: 20-min slots from 09:00 → 17:00
+#         start_minutes = 9 * 60      # 09:00
+#         end_minutes = 17 * 60       # 17:00
+#         slot_counter = 0
+#         current = start_minutes
+
+#         while current < end_minutes:
+#             slot_start = current
+#             slot_end = current + 20   # 20 minutes
+
+#             if slot_end > end_minutes:
+#                 break
+
+#             sh = slot_start // 60
+#             sm = slot_start % 60
+#             eh = slot_end // 60
+#             em = slot_end % 60
+
+#             start_str = f"{sh:02d}:{sm:02d}"
+#             end_str = f"{eh:02d}:{em:02d}"
+
+#             # Check booking for that start time
+#             taken = c.execute("""
+#                 SELECT 1 FROM reservations
+#                 WHERE entity_type='person' AND entity_id=? 
+#                   AND date=? AND start_time=?
+#                   AND status IN ('Pending','Approved')
+#             """, (entity_id, selected_date, start_str)).fetchone()
+
+#             if not taken:
+#                 slot_counter += 1
+#                 available_times.append({
+#                     "start": start_str,
+#                     "end": end_str,
+#                     "slot_id": f"p{slot_counter}"
+#                 })
+
+#             current += 20
+
+#     return render_template(
+#         "reserve.html",
+#         companies=companies,
+#         people=people,
+#         selected_company=selected_company,
+#         selected_date=selected_date,
+#         entity_id=entity_id,
+#         available_times=available_times
+#     )
+
 @app.route("/reserve", methods=["GET", "POST"])
 @verified_required
 def reserve():
@@ -691,17 +867,16 @@ def reserve():
     # 3) POST → Reserve a slot
     # --------------------------
     if request.method == "POST":
-        chosen_time = request.form.get("time")      # start time (HH:MM)
+        chosen_time = request.form.get("time")
         slot_id = request.form.get("slot_id")
         entity_id = request.form.get("entity_id")
         selected_date = request.form.get("date")
-        entity_type = "person"   # always person now
 
         if not entity_id:
             flash("❌ Please select a person.", "danger")
             return redirect(url_for("reserve"))
 
-        # Already booked?
+        # Check if slot already booked
         c.execute("""
             SELECT id FROM reservations
             WHERE entity_type='person' AND entity_id=? 
@@ -731,15 +906,13 @@ def reserve():
                                     entity_id=entity_id,
                                     date=selected_date))
 
-        # Get invited person info
+        # Guest (target) info
         person = c.execute("""
             SELECT first_name, last_name, email 
             FROM approved_users WHERE id=?
         """, (entity_id,)).fetchone()
         full_name = f"{person['first_name']} {person['last_name']}"
         target_email = person["email"]
-
-        invites_str = f"{email},{target_email}"
 
         # Save reservation
         c.execute("""
@@ -748,21 +921,49 @@ def reserve():
             VALUES (?,?,?,?,?,?,?,?,?)
         """, (
             user_id, "person", entity_id, selected_date,
-            chosen_time, free_room, invites_str, "Pending", slot_id
+            chosen_time, free_room, f"{email},{target_email}", "Pending", slot_id
         ))
         conn.commit()
 
-        # Email
-        subject = f"Meeting Request with {full_name}"
-        body = (
-            f"Hello,\n\nA meeting has been requested with {full_name}.\n\n"
-            f"📅 Date: {selected_date}\n"
-            f"⏰ Time: {chosen_time}\n"
-            f"👤 Person: {full_name}\n"
-            f"🏠 Room: {free_room}\n\n"
-            f"Requested by: {email}\n"
+        # Reservation ID for approval links
+        reservation_id = c.lastrowid
+
+        # ----------------------------------------------------
+        # YES / NO Approval Links (guest clicks from email)
+        # ----------------------------------------------------
+        approve_link = f"https://mckinsey-booking-system.onrender.com/respond_meeting/{reservation_id}?decision=approve"
+        reject_link = f"https://mckinsey-booking-system.onrender.com/respond_meeting/{reservation_id}?decision=reject"
+
+        # ----------------------------------------------------
+        # Email to REQUESTER
+        # ----------------------------------------------------
+        subject_requester = "Your Meeting Request Has Been Submitted"
+        body_requester = (
+            f"Dear {email},\n\n"
+            f"Your meeting request with {full_name} has been successfully scheduled.\n\n"
+            f"Date: {selected_date}\n"
+            f"Time: {chosen_time}\n"
+            f"Meeting Room: {free_room}\n"
+            f"Requested by: you\n\n"
+            f"Please wait for the guest's confirmation.\n"
         )
-        send_plain_email(f"{email},{target_email}", subject, body)
+        send_plain_email(email, subject_requester, body_requester)
+
+        # ----------------------------------------------------
+        # Email to GUEST (invitee)
+        # ----------------------------------------------------
+        subject_guest = f"Meeting Request from {email}"
+        body_guest = (
+            f"Dear {full_name},\n\n"
+            f"You have received a new meeting request.\n\n"
+            f"Date: {selected_date}\n"
+            f"Time: {chosen_time}\n"
+            f"Meeting Room: {free_room}\n"
+            f"Requested by: {email}\n\n"
+            f"To ACCEPT this meeting, click the link below:\n{approve_link}\n\n"
+            f"To DECLINE this meeting, click the link below:\n{reject_link}\n\n"
+        )
+        send_plain_email(target_email, subject_guest, body_guest)
 
         flash("✅ Meeting request submitted!", "success")
         return redirect(url_for("my_meetings"))
@@ -772,15 +973,15 @@ def reserve():
     # -----------------------------
     available_times = []
     if entity_id and selected_date:
-        # ✅ NEW: 20-min slots from 09:00 → 17:00
-        start_minutes = 9 * 60      # 09:00
-        end_minutes = 17 * 60       # 17:00
+        # 20-minute slots from 09:00 → 17:00
+        start_minutes = 9 * 60
+        end_minutes = 17 * 60
         slot_counter = 0
         current = start_minutes
 
         while current < end_minutes:
             slot_start = current
-            slot_end = current + 20   # 20 minutes
+            slot_end = current + 20
 
             if slot_end > end_minutes:
                 break
@@ -793,7 +994,7 @@ def reserve():
             start_str = f"{sh:02d}:{sm:02d}"
             end_str = f"{eh:02d}:{em:02d}"
 
-            # Check booking for that start time
+            # Check booking
             taken = c.execute("""
                 SELECT 1 FROM reservations
                 WHERE entity_type='person' AND entity_id=? 
@@ -2063,6 +2264,41 @@ def clear_approved_users():
     return redirect(url_for("admin_users"))
 
 
+@app.route("/respond_meeting/<int:reservation_id>")
+def respond_meeting(reservation_id):
+    decision = request.args.get("decision")
+
+    if decision not in ("approve", "reject"):
+        return "Invalid decision.", 400
+
+    conn = get_db()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+
+    # Fetch reservation
+    c.execute("SELECT * FROM reservations WHERE id=?", (reservation_id,))
+    reservation = c.fetchone()
+
+    if not reservation:
+        return "Reservation not found.", 404
+
+    # Update status
+    new_status = "Approved" if decision == "approve" else "Rejected"
+    c.execute("UPDATE reservations SET status=? WHERE id=?", (new_status, reservation_id))
+    conn.commit()
+    conn.close()
+
+    # Response message
+    if decision == "approve":
+        return """
+            <h2>Meeting Approved</h2>
+            <p>You have successfully approved this meeting request.</p>
+        """
+    else:
+        return """
+            <h2>Meeting Declined</h2>
+            <p>You have declined this meeting request.</p>
+        """
 
 
 # if __name__ == "__main__":
