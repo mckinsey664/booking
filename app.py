@@ -951,7 +951,7 @@ def reserve():
 
         body_requester = (
             f"Dear {user['first_name']},\n\n"
-            f"Your meeting request with {full_name} from {selected_company} has been successfully scheduled.\n\n"
+            f"Your meeting request with {full_name} of {selected_company} has been successfully scheduled.\n\n"
             f"Date: {pretty_date}\n"
             f"Time: {pretty_time}\n"
             f"Meeting Room: {free_room}\n\n"
@@ -972,14 +972,14 @@ def reserve():
   <p>Dear {full_name},</p>
 
   <p>You have received a new meeting request from <b>{requester_full_name}</b> 
-     from <b>{selected_company}</b>.</p>
+     of <b>{selected_company}</b>.</p>
 
   <p><b>Date:</b> {pretty_date}<br>
      <b>Time:</b> {pretty_time}<br>
      <b>Meeting Room:</b> {free_room}<br>
      <b>Requested by:</b> {email}</p>
 
-  <p>Please choose an option below:</p>
+  <p>Please select one of the options below:</p>
 
   <div style="margin-top:15px;">
     <a href="{approve_link}" 
