@@ -1969,11 +1969,161 @@ def person_requests():
     conn.close()
     return render_template("person_requests.html", requests=requests_rows, me=me)
 
+# @app.route("/person_requests/approve/<int:reservation_id>", methods=["POST"])
+# @verified_required
+# def approve_person_request(reservation_id):
+#     """
+#     Approve a meeting where the logged-in user is the invited person.
+#     """
+#     email = session.get("email")
+#     if not email:
+#         return redirect(url_for("login"))
+
+#     conn = get_db()
+#     conn.row_factory = sqlite3.Row
+#     c = conn.cursor()
+
+#     # Fetch reservation and ensure this user is the target person
+#     reservation = c.execute("""
+#         SELECT r.*,
+#                req.first_name || ' ' || req.last_name AS requester_name,
+#                req.email  AS requester_email,
+#                req.company_name AS requester_company,
+#                target.id  AS target_id,
+#                target.first_name || ' ' || target.last_name AS target_name,
+#                target.email AS target_email
+#         FROM reservations r
+#         JOIN approved_users req    ON r.user_id   = req.id
+#         JOIN approved_users target ON r.entity_id = target.id
+#         WHERE r.id = ? AND r.entity_type = 'person'
+#     """, (reservation_id,)).fetchone()
+
+#     if not reservation:
+#         flash("❌ Reservation not found.", "danger")
+#         return redirect(url_for("person_requests"))
+
+#     if reservation["target_email"].lower() != email.lower():
+#         # Someone else trying to approve
+#         abort(403)
+
+#     # Build recipients list: requester + all invites + target
+#     invites_list = [e.strip() for e in (reservation["invites"] or "").split(",") if e.strip()]
+#     recipients = invites_list + [reservation["requester_email"], reservation["target_email"]]
+#     # make unique in order
+#     recipients = list(dict.fromkeys(recipients))
+
+#     # Update status
+#     c.execute("UPDATE reservations SET status = 'Approved' WHERE id = ?", (reservation_id,))
+#     conn.commit()
+
+#     # Send approval email + calendar event
+#     try:
+#         subject = f"Meeting Request Approved - {reservation['target_name']}"
+#         body = (
+#             f"Hello,\n\n"
+#             f"Your meeting request with {reservation['target_name']} has been approved.\n\n"
+#             f"📅 Date: {reservation['date']}\n"
+#             f"⏰ Time: {reservation['start_time']}\n"
+#             f"🏠 Room: {reservation['room_name'] or 'TBD'}\n\n"
+#             f"Thank you,\nMcKinsey Electronics Team"
+#         )
+
+#         to_field = ", ".join(recipients)
+#         send_plain_email(to_field, subject, body)
+#         flash("✅ Meeting approved and email sent.", "success")
+
+#         # Calendar event
+#         start_str = f"{reservation['date']} {reservation['start_time']}"
+#         start_dt = datetime.strptime(start_str, "%Y-%m-%d %H:%M")
+#         end_dt = start_dt + timedelta(minutes=30)
+
+#         summary = f"Meeting with {reservation['target_name']}"
+#         description = (
+#             f"Approved meeting between {reservation['requester_name']} "
+#             f"and {reservation['target_name']}.\n"
+#             f"Room: {reservation['room_name'] or 'TBD'}"
+#         )
+
+#         create_calendar_event(summary, description, start_dt, end_dt, recipients)
+#         flash("📅 Meeting added to Google Calendar for all attendees.", "success")
+
+#     except Exception as e:
+#         flash(f"⚠️ Meeting approved but email or calendar invite failed: {e}", "warning")
+
+#     conn.close()
+#     return redirect(url_for("person_requests"))
+
+# @app.route("/person_requests/reject/<int:reservation_id>", methods=["POST"])
+# @verified_required
+# def reject_person_request(reservation_id):
+#     """
+#     Reject a meeting where the logged-in user is the invited person.
+#     """
+#     email = session.get("email")
+#     if not email:
+#         return redirect(url_for("login"))
+
+#     conn = get_db()
+#     conn.row_factory = sqlite3.Row
+#     c = conn.cursor()
+
+#     reservation = c.execute("""
+#         SELECT r.*,
+#                req.first_name || ' ' || req.last_name AS requester_name,
+#                req.email  AS requester_email,
+#                target.first_name || ' ' || target.last_name AS target_name,
+#                target.email AS target_email
+#         FROM reservations r
+#         JOIN approved_users req    ON r.user_id   = req.id
+#         JOIN approved_users target ON r.entity_id = target.id
+#         WHERE r.id = ? AND r.entity_type = 'person'
+#     """, (reservation_id,)).fetchone()
+
+#     if not reservation:
+#         flash("❌ Reservation not found.", "danger")
+#         return redirect(url_for("person_requests"))
+
+#     if reservation["target_email"].lower() != email.lower():
+#         abort(403)
+
+#     # Recipients: requester + all invites + target
+#     invites_list = [e.strip() for e in (reservation["invites"] or "").split(",") if e.strip()]
+#     recipients = invites_list + [reservation["requester_email"], reservation["target_email"]]
+#     recipients = list(dict.fromkeys(recipients))
+
+#     # Update status
+#     c.execute("UPDATE reservations SET status = 'Rejected' WHERE id = ?", (reservation_id,))
+#     conn.commit()
+
+#     # Send rejection email
+#     try:
+#         subject = f"Meeting Request Rejected - {reservation['target_name']}"
+#         body = (
+#             f"Hello,\n\n"
+#             f"Unfortunately, your meeting request with {reservation['target_name']} "
+#             f"has been rejected.\n\n"
+#             f"📅 Date: {reservation['date']}\n"
+#             f"⏰ Time: {reservation['start_time']}\n\n"
+#             f"Thank you,\nMcKinsey Electronics Team"
+#         )
+
+#         to_field = ", ".join(recipients)
+#         send_plain_email(to_field, subject, body)
+
+#         flash("❌ Meeting rejected and email sent successfully.", "danger")
+#     except Exception as e:
+#         flash(f"⚠️ Meeting rejected but email failed to send: {e}", "warning")
+
+#     conn.close()
+#     return redirect(url_for("person_requests"))
+
+
 @app.route("/person_requests/approve/<int:reservation_id>", methods=["POST"])
 @verified_required
 def approve_person_request(reservation_id):
     """
-    Approve a meeting where the logged-in user is the invited person.
+    Logged-in invited person approves the meeting.
+    Uses same email structure as respond_meeting.
     """
     email = session.get("email")
     if not email:
@@ -1983,14 +2133,14 @@ def approve_person_request(reservation_id):
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
 
-    # Fetch reservation and ensure this user is the target person
+    # Fetch reservation
     reservation = c.execute("""
         SELECT r.*,
                req.first_name || ' ' || req.last_name AS requester_name,
+               req.first_name AS requester_first,
                req.email  AS requester_email,
-               req.company_name AS requester_company,
-               target.id  AS target_id,
                target.first_name || ' ' || target.last_name AS target_name,
+               target.company_name AS target_company,
                target.email AS target_email
         FROM reservations r
         JOIN approved_users req    ON r.user_id   = req.id
@@ -2003,61 +2153,78 @@ def approve_person_request(reservation_id):
         return redirect(url_for("person_requests"))
 
     if reservation["target_email"].lower() != email.lower():
-        # Someone else trying to approve
         abort(403)
 
-    # Build recipients list: requester + all invites + target
-    invites_list = [e.strip() for e in (reservation["invites"] or "").split(",") if e.strip()]
-    recipients = invites_list + [reservation["requester_email"], reservation["target_email"]]
-    # make unique in order
-    recipients = list(dict.fromkeys(recipients))
+    # Date formatting
+    start_dt = datetime.strptime(
+        f"{reservation['date']} {reservation['start_time']}",
+        "%Y-%m-%d %H:%M"
+    )
+    end_dt = start_dt + timedelta(minutes=20)
 
-    # Update status
-    c.execute("UPDATE reservations SET status = 'Approved' WHERE id = ?", (reservation_id,))
+    pretty_date = start_dt.strftime("%-d %B %Y")
+    pretty_time = start_dt.strftime("%I:%M") + " – " + end_dt.strftime("%I:%M %p")
+
+    weekday = start_dt.strftime("%a")
+    month = start_dt.strftime("%B")
+    day = start_dt.strftime("%-d")
+    year = start_dt.strftime("%Y")
+    pretty_start = start_dt.strftime("%-I:%M%p").lower()
+    pretty_end = end_dt.strftime("%-I:%M%p").lower()
+
+    # EXACT SAME subject as respond_meeting
+    subject_line = (
+        f"Invitation: Semicon Summit Dubai 2025 @ "
+        f"{weekday} {month} {day}, {year} {pretty_start} - {pretty_end} (GMT+4)"
+    )
+
+    # Recipients list
+    invites_list = [e.strip() for e in (reservation["invites"] or "").split(",") if e.strip()]
+    recipients = list(dict.fromkeys(invites_list + [
+        reservation["requester_email"],
+        reservation["target_email"]
+    ]))
+
+    # Update DB
+    c.execute("UPDATE reservations SET status='Approved' WHERE id=?", (reservation_id,))
     conn.commit()
 
-    # Send approval email + calendar event
+    # Email to requester (same as respond_meeting)
+    body_requester = (
+        f"Dear {reservation['requester_first']},\n\n"
+        f"Your meeting request with {reservation['target_name']} of {reservation['target_company']} "
+        f"has been accepted.\n\n"
+        f"Below are the meeting details:\n\n"
+        f"Date: {pretty_date}\n"
+        f"Time: {pretty_time}\n"
+        f"Meeting Room: {reservation['room_name'] or 'Room TBD'}\n\n"
+        f"Thank you,\n"
+    )
+
+    send_plain_email(reservation["requester_email"], subject_line, body_requester)
+
+    # Calendar event
     try:
-        subject = f"Meeting Request Approved - {reservation['target_name']}"
-        body = (
-            f"Hello,\n\n"
-            f"Your meeting request with {reservation['target_name']} has been approved.\n\n"
-            f"📅 Date: {reservation['date']}\n"
-            f"⏰ Time: {reservation['start_time']}\n"
-            f"🏠 Room: {reservation['room_name'] or 'TBD'}\n\n"
-            f"Thank you,\nMcKinsey Electronics Team"
-        )
-
-        to_field = ", ".join(recipients)
-        send_plain_email(to_field, subject, body)
-        flash("✅ Meeting approved and email sent.", "success")
-
-        # Calendar event
-        start_str = f"{reservation['date']} {reservation['start_time']}"
-        start_dt = datetime.strptime(start_str, "%Y-%m-%d %H:%M")
-        end_dt = start_dt + timedelta(minutes=30)
-
         summary = f"Meeting with {reservation['target_name']}"
         description = (
             f"Approved meeting between {reservation['requester_name']} "
             f"and {reservation['target_name']}.\n"
             f"Room: {reservation['room_name'] or 'TBD'}"
         )
-
         create_calendar_event(summary, description, start_dt, end_dt, recipients)
-        flash("📅 Meeting added to Google Calendar for all attendees.", "success")
-
     except Exception as e:
-        flash(f"⚠️ Meeting approved but email or calendar invite failed: {e}", "warning")
+        print("Calendar Error:", e)
 
-    conn.close()
+    flash("Meeting approved!", "success")
     return redirect(url_for("person_requests"))
+
 
 @app.route("/person_requests/reject/<int:reservation_id>", methods=["POST"])
 @verified_required
 def reject_person_request(reservation_id):
     """
-    Reject a meeting where the logged-in user is the invited person.
+    Logged-in invited person rejects the meeting.
+    Uses same email structure as respond_meeting.
     """
     email = session.get("email")
     if not email:
@@ -2067,11 +2234,14 @@ def reject_person_request(reservation_id):
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
 
+    # Fetch reservation
     reservation = c.execute("""
         SELECT r.*,
                req.first_name || ' ' || req.last_name AS requester_name,
+               req.first_name AS requester_first,
                req.email  AS requester_email,
                target.first_name || ' ' || target.last_name AS target_name,
+               target.company_name AS target_company,
                target.email AS target_email
         FROM reservations r
         JOIN approved_users req    ON r.user_id   = req.id
@@ -2086,35 +2256,46 @@ def reject_person_request(reservation_id):
     if reservation["target_email"].lower() != email.lower():
         abort(403)
 
-    # Recipients: requester + all invites + target
-    invites_list = [e.strip() for e in (reservation["invites"] or "").split(",") if e.strip()]
-    recipients = invites_list + [reservation["requester_email"], reservation["target_email"]]
-    recipients = list(dict.fromkeys(recipients))
+    # Date formatting
+    start_dt = datetime.strptime(
+        f"{reservation['date']} {reservation['start_time']}",
+        "%Y-%m-%d %H:%M"
+    )
+    end_dt = start_dt + timedelta(minutes=20)
 
-    # Update status
-    c.execute("UPDATE reservations SET status = 'Rejected' WHERE id = ?", (reservation_id,))
+    pretty_date = start_dt.strftime("%-d %B %Y")
+    pretty_time = start_dt.strftime("%I:%M") + " – " + end_dt.strftime("%I:%M %p")
+
+    weekday = start_dt.strftime("%a")
+    month = start_dt.strftime("%B")
+    day = start_dt.strftime("%-d")
+    year = start_dt.strftime("%Y")
+    pretty_start = start_dt.strftime("%-I:%M%p").lower()
+    pretty_end = end_dt.strftime("%-I:%M%p").lower()
+
+    # SAME SUBJECT
+    subject_line = (
+        f"Invitation: Semicon Summit Dubai 2025 @ "
+        f"{weekday} {month} {day}, {year} {pretty_start} - {pretty_end} (GMT+4)"
+    )
+
+    # Update DB
+    c.execute("UPDATE reservations SET status='Rejected' WHERE id=?", (reservation_id,))
     conn.commit()
 
-    # Send rejection email
-    try:
-        subject = f"Meeting Request Rejected - {reservation['target_name']}"
-        body = (
-            f"Hello,\n\n"
-            f"Unfortunately, your meeting request with {reservation['target_name']} "
-            f"has been rejected.\n\n"
-            f"📅 Date: {reservation['date']}\n"
-            f"⏰ Time: {reservation['start_time']}\n\n"
-            f"Thank you,\nMcKinsey Electronics Team"
-        )
+    # Email to requester (same as respond_meeting)
+    body_requester = (
+        f"Dear {reservation['requester_first']},\n\n"
+        f"Your meeting request with {reservation['target_name']} of {reservation['target_company']} "
+        f"has been rejected.\n\n"
+        f"Date: {pretty_date}\n"
+        f"Time: {pretty_time}\n\n"
+        f"Thank you,\n"
+    )
 
-        to_field = ", ".join(recipients)
-        send_plain_email(to_field, subject, body)
+    send_plain_email(reservation["requester_email"], subject_line, body_requester)
 
-        flash("❌ Meeting rejected and email sent successfully.", "danger")
-    except Exception as e:
-        flash(f"⚠️ Meeting rejected but email failed to send: {e}", "warning")
-
-    conn.close()
+    flash("Meeting rejected.", "danger")
     return redirect(url_for("person_requests"))
 
 
@@ -2273,116 +2454,6 @@ def clear_approved_users():
 
     flash("✅ All approved users have been deleted successfully.", "success")
     return redirect(url_for("admin_users"))
-
-
-# @app.route("/respond_meeting/<int:reservation_id>")
-# def respond_meeting(reservation_id):
-#     """
-#     Handles approval/rejection from email links.
-#     No login required (email-based approval).
-#     """
-#     decision = request.args.get("decision")
-
-#     if decision not in ("approve", "reject"):
-#         return "Invalid action.", 400
-
-#     conn = get_db()
-#     conn.row_factory = sqlite3.Row
-#     c = conn.cursor()
-
-#     # Pull reservation, requester, target
-#     reservation = c.execute("""
-#         SELECT r.*,
-#                req.first_name || ' ' || req.last_name AS requester_name,
-#                req.email  AS requester_email,
-#                target.first_name || ' ' || target.last_name AS target_name,
-#                target.email AS target_email
-#         FROM reservations r
-#         JOIN approved_users req    ON r.user_id   = req.id
-#         JOIN approved_users target ON r.entity_id = target.id
-#         WHERE r.id = ? AND r.entity_type = 'person'
-#     """, (reservation_id,)).fetchone()
-
-#     if not reservation:
-#         return "Reservation not found.", 404
-
-#     # ----------------------------
-#     # APPROVE
-#     # ----------------------------
-#     if decision == "approve":
-
-#         # Update DB
-#         c.execute("UPDATE reservations SET status='Approved' WHERE id=?", (reservation_id,))
-#         conn.commit()
-
-#         # Recipients: requester + target + extra invites
-#         invites_list = [e.strip() for e in (reservation["invites"] or "").split(",") if e.strip()]
-#         recipients = list(dict.fromkeys(invites_list + [reservation["requester_email"], reservation["target_email"]]))
-
-#         # Send notification
-#         subject = f"Meeting Request Approved - {reservation['target_name']}"
-#         body = (
-#             f"Hello,\n\n"
-#             f"Your meeting request with {reservation['target_name']} has been approved.\n\n"
-#             f"📅 Date: {reservation['date']}\n"
-#             f"⏰ Time: {reservation['start_time']}\n"
-#             f"🏠 Room: {reservation['room_name'] or 'TBD'}\n\n"
-#             f"Thank you,\nMcKinsey Electronics Team"
-#         )
-
-#         send_plain_email(", ".join(recipients), subject, body)
-
-#         # Calendar event
-#         start_dt = datetime.strptime(f"{reservation['date']} {reservation['start_time']}", "%Y-%m-%d %H:%M")
-#         end_dt = start_dt + timedelta(minutes=20)
-
-#         summary = f"Meeting with {reservation['target_name']}"
-#         description = (
-#             f"Approved meeting between {reservation['requester_name']} "
-#             f"and {reservation['target_name']}.\n"
-#             f"Room: {reservation['room_name'] or 'TBD'}"
-#         )
-
-#         try:
-#             create_calendar_event(summary, description, start_dt, end_dt, recipients)
-#         except Exception as e:
-#             print("Calendar error:", e)
-
-#         return """
-#         <h2>Meeting Approved</h2>
-#         <p>Thank you. The meeting has been approved and both parties were notified.</p>
-#         """
-
-#     # ----------------------------
-#     # REJECT
-#     # ----------------------------
-#     if decision == "reject":
-
-#         # Update DB
-#         c.execute("UPDATE reservations SET status='Rejected' WHERE id=?", (reservation_id,))
-#         conn.commit()
-
-#         # Recipients
-#         invites_list = [e.strip() for e in (reservation["invites"] or "").split(",") if e.strip()]
-#         recipients = list(dict.fromkeys(invites_list + [reservation["requester_email"], reservation["target_email"]]))
-
-#         # Email
-#         subject = f"Meeting Request Rejected - {reservation['target_name']}"
-#         body = (
-#             f"Hello,\n\n"
-#             f"Unfortunately, your meeting request with {reservation['target_name']} "
-#             f"has been rejected.\n\n"
-#             f"📅 Date: {reservation['date']}\n"
-#             f"⏰ Time: {reservation['start_time']}\n\n"
-#             f"Thank you,\nMcKinsey Electronics Team"
-#         )
-
-#         send_plain_email(", ".join(recipients), subject, body)
-
-#         return """
-#         <h2>Meeting Rejected</h2>
-#         <p>The meeting has been declined and the requester has been notified.</p>
-#         """
 
 @app.route("/respond_meeting/<int:reservation_id>")
 def respond_meeting(reservation_id):
