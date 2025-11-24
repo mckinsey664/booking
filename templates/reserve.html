@@ -8,9 +8,9 @@
 
   <style>
     body {
+      font-family: Tahoma, sans-serif !important;
       background: #000;
       color: #fff;
-      font-family: "Segoe UI", sans-serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -88,7 +88,7 @@
   <label class="form-label">Select Company</label>
   <select name="company_name" class="form-select" onchange="this.form.submit()">
     <option value="">Choose company...</option>
-    {% for c in companies %}
+    {% for c in companies|sort(attribute='company_name') %}
       <option value="{{ c['company_name'] }}"
         {% if selected_company == c['company_name'] %}selected{% endif %}>
         {{ c['company_name'] }}
