@@ -61,20 +61,21 @@ body {
   <div class="card p-4 text-center">
     <img src="{{ url_for('static', filename='logo.png') }}" alt="McKinsey Logo" class="logo">
 
-    <form method="POST" class="text-start">
-<small class="text-muted d-block mb-2">
-  Please enter the email address you registered for the Semicon Summit in Dubai with in order to proceed.
-</small>
+<form method="POST" class="text-start">
 
-<div class="mb-3">
-  <label for="email" class="form-label">Email address</label>
-  <input type="email" name="email" class="form-control" id="email"
-         placeholder="name@example.com" required>
-</div>
+  <small class="d-block mb-2" style="color:#ffffff; opacity:0.9;">
+    Please enter the email address you registered for the Semicon Summit in Dubai with in order to proceed.
+  </small>
 
-      
-      <button type="submit" class="btn btn-brand w-100 text-white">Login</button>
-    </form>
+  <div class="mb-3">
+    <label for="email" class="form-label">Email address</label>
+    <input type="email" name="email" class="form-control" id="email"
+           placeholder="name@example.com" required>
+  </div>
+
+  <button type="submit" class="btn btn-brand w-100 text-white">Login</button>
+</form>
+
 
     {% with messages = get_flashed_messages() %}
       {% if messages %}
