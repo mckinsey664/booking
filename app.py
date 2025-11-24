@@ -341,7 +341,8 @@ def reserve():
     "WAGO Middle East FZC",
     "Wurth Elektronik eiSos GmbH & Co. KG",
     "BPM",
-    "McKinsey Electronics"
+    "McKinsey Electronics",
+    "Qorvo"
     ]
 
     # Load only allowed companies
