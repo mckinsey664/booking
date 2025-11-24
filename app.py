@@ -340,7 +340,8 @@ def reserve():
     "Viking Tech Europe",
     "WAGO Middle East FZC",
     "Wurth Elektronik eiSos GmbH & Co. KG",
-    "BPM"
+    "BPM",
+    "Mckinsey Electronics"
     ]
 
     # Load only allowed companies
