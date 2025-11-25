@@ -1784,13 +1784,25 @@ def cancel_meeting(meeting_id):
 
     if status == "approved":
         subject = "Meeting Cancellation Notice"
-        body = (
-            f"Dear attendee,\n\n"
-            f"The meeting scheduled for {meeting['date']} at {meeting['start_time']} "
-            f"in room {meeting['room_name']} has been CANCELLED.\n\n"
-            f"Cancelled by: {email}\n\n"
-            f"Regards,\nRoom Reservation System"
-        )
+        # body = (
+        #     f"Dear attendee,\n\n"
+        #     f"The meeting scheduled for {meeting['date']} at {meeting['start_time']} "
+        #     f"in room {meeting['room_name']} has been CANCELLED.\n\n"
+        #     f"Cancelled by: {email}\n\n"
+        #     f"Regards,\nRoom Reservation System"
+        # )
+        body = f"""
+<p>Dear attendee,</p>
+
+<p>The meeting scheduled for <b>{meeting['date']}</b> at <b>{meeting['start_time']}</b> 
+in room <b>{meeting['room_name']}</b> has been <span style='color:#d00000;'><b>CANCELLED</b></span>.</p>
+
+<p><b>Cancelled by:</b> {email}</p>
+
+<p>Regards,<br>
+Room Reservation System</p>
+"""
+
 
         # Send email if invites exist
         attendees = meeting["invites"].split(",") if meeting["invites"] else []
