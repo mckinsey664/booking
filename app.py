@@ -1906,17 +1906,20 @@ def respond_meeting(reservation_id):
         conn.commit()
 
         # Email to requester — meeting accepted
-        body_requester = (
-            f"Dear {reservation['requester_first']},\n\n"
-            f"Your meeting request with {reservation['target_name']} of {reservation['target_company']} "
-            f"has been accepted.\n\n"
-            f"Below are the meeting details:\n\n"
-            f"Date: {pretty_date}\n"
-            f"Time: {pretty_time}\n"
-            f"Meeting Room: {reservation['room_name'] or 'Room TBD'}\n\n"
-            f"Thank you,\n"
-            f""
-        )
+        body_requester = f"""
+<p>Dear {reservation['requester_first']},</p>
+
+<p>Your meeting request with <b>{reservation['target_name']}</b> 
+from <b>{reservation['target_company']}</b> has been <b>accepted</b>.</p>
+
+<p><b>Meeting Details:</b><br>
+<b>Date:</b> {pretty_date}<br>
+<b>Time:</b> {pretty_time}<br>
+<b>Meeting Room:</b> {reservation['room_name'] or 'Room TBD'}</p>
+
+<p>Thank you,</p>
+"""
+
 
         send_html_email(reservation["requester_email"], subject_line, body_requester)
 
@@ -1946,15 +1949,19 @@ def respond_meeting(reservation_id):
         conn.commit()
 
         # Email to requester — meeting rejected
-        body_requester = (
-            f"Dear {reservation['requester_first']},\n\n"
-            f"Your meeting request with {reservation['target_name']} of {reservation['target_company']} "
-            f"has been rejected.\n\n"
-            f"Date: {pretty_date}\n"
-            f"Time: {pretty_time}\n\n"
-            f"Thank you,\n"
-            f""
-        )
+        body_requester = f"""
+<p>Dear {reservation['requester_first']},</p>
+
+<p>Your meeting request with <b>{reservation['target_name']}</b> 
+from <b>{reservation['target_company']}</b> has been 
+<span style='color:#d00000;'><b>rejected</b></span>.</p>
+
+<p><b>Date:</b> {pretty_date}<br>
+<b>Time:</b> {pretty_time}</p>
+
+<p>Thank you,</p>
+"""
+
 
         send_html_email(reservation["requester_email"], subject_line, body_requester)
 
