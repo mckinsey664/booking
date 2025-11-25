@@ -60,6 +60,18 @@
   </style>
 </head>
 <body>
+<!-- FLASH MESSAGES -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3" style="max-width:600px;">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} text-center">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
 
 <nav class="navbar navbar-dark bg-dark fixed-top">
   <div class="container-fluid">
