@@ -75,7 +75,8 @@ def send_plain_email(to_email, subject, message):
     try:
         msg = EmailMessage()
         msg["Subject"] = subject
-        msg["From"] = SMTP_EMAIL
+        # msg["From"] = SMTP_EMAIL
+        msg["From"] = f"McKinsey Electronics <{SMTP_EMAIL}>"
         msg["To"] = to_email
         msg.set_content(message)
 
