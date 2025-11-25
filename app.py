@@ -1641,14 +1641,27 @@ def reject_person_request(reservation_id):
     conn.commit()
 
     # Email to requester (same as respond_meeting)
-    body_requester = (
-        f"Dear {reservation['requester_first']},\n\n"
-        f"Your meeting request with {reservation['target_name']} of {reservation['target_company']} "
-        f"has been rejected.\n\n"
-        f"Date: {pretty_date}\n"
-        f"Time: {pretty_time}\n\n"
-        f"Thank you,\n"
-    )
+    # body_requester = (
+    #     f"Dear {reservation['requester_first']},\n\n"
+    #     f"Your meeting request with {reservation['target_name']} of {reservation['target_company']} "
+    #     f"has been rejected.\n\n"
+    #     f"Date: {pretty_date}\n"
+    #     f"Time: {pretty_time}\n\n"
+    #     f"Thank you,\n"
+    # )
+
+    body_requester = f"""
+<p>Dear {reservation['requester_first']},</p>
+
+<p>Your meeting request with <b>{reservation['target_name']}</b> 
+from <b>{reservation['target_company']}</b> has been <b>rejected</b>.</p>
+
+<p><b>Date:</b> {pretty_date}<br>
+<b>Time:</b> {pretty_time}</p>
+
+<p>Thank you,</p>
+"""
+
 
     send_html_email(reservation["requester_email"], subject_line, body_requester)
 
