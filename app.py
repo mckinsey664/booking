@@ -595,7 +595,8 @@ def send_html_email(to_email, subject, html_body):
         </div>
         """
         
-        msg.add_alternative(html_body, subtype="html")
+        # SEND THE STYLED VERSION
+        msg.add_alternative(styled_html, subtype="html")
 
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
             smtp.login(SMTP_EMAIL, SMTP_PASSWORD)
