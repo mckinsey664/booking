@@ -465,17 +465,31 @@ def reserve():
         # -----------------------------
         # subject_requester = "Your Meeting Request Has Been Submitted"
 
-        body_requester = (
-            f"Dear {user['first_name']},\n\n"
-            f"Your meeting request with {full_name} of {selected_company} has been successfully scheduled.\n\n"
-            f"Date: {pretty_date}\n"
-            f"Time: {pretty_time}\n"
-            f"Meeting Room: {free_room}\n\n"
-            f"Please wait for the guest's confirmation.\n"
-        )
+        # body_requester = (
+        #     f"Dear {user['first_name']},\n\n"
+        #     f"Your meeting request with {full_name} of {selected_company} has been successfully scheduled.\n\n"
+        #     f"Date: {pretty_date}\n"
+        #     f"Time: {pretty_time}\n"
+        #     f"Meeting Room: {free_room}\n\n"
+        #     f"Please wait for the guest's confirmation.\n"
+        # )
 
+
+
+        body_requester = f"""
+            <p>Dear {user['first_name']},</p>
+
+            <p>Your meeting request with {full_name} of {selected_company} has been successfully scheduled.</p>
+
+            <p>
+            <b>Date:</b> {pretty_date}<br>
+            <b>Time:</b> {pretty_time}<br>
+            <b>Meeting Room:</b> {free_room}
+            </p>
+
+            <p>Please wait for the guest's confirmation.</p>
+        """
         send_html_email(email, subject_requester, body_requester)
-
         
 
         # -----------------------------
