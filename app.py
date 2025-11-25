@@ -474,7 +474,7 @@ def reserve():
             f"Please wait for the guest's confirmation.\n"
         )
 
-        send_plain_email(email, subject_requester, body_requester)
+        send_html_email(email, subject_requester, body_requester)
 
         # -----------------------------
         # EMAIL TO GUEST (HTML)
@@ -577,6 +577,15 @@ def send_html_email(to_email, subject, html_body):
         msg["Subject"] = subject
         msg["From"] = f"McKinsey Electronics <{SMTP_EMAIL}>"
         msg["To"] = to_email
+
+        # Wrap ALL emails in Tahoma styling
+        styled_html = f"""
+        <div style="font-family:Tahoma, sans-serif; line-height:1.6; font-size:14px; margin:0; padding:0;">
+        <p style="margin-top:0;"></p>
+        {html_body}
+        </div>
+        """
+        
         msg.add_alternative(html_body, subtype="html")
 
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
@@ -1519,7 +1528,7 @@ def approve_person_request(reservation_id):
         f"Thank you,\n"
     )
 
-    send_plain_email(reservation["requester_email"], subject_line, body_requester)
+    send_html_email(reservation["requester_email"], subject_line, body_requester)
 
     # Calendar event
     try:
@@ -1611,7 +1620,7 @@ def reject_person_request(reservation_id):
         f"Thank you,\n"
     )
 
-    send_plain_email(reservation["requester_email"], subject_line, body_requester)
+    send_html_email(reservation["requester_email"], subject_line, body_requester)
 
     flash("Meeting rejected.", "danger")
     return redirect(url_for("person_requests"))
@@ -1744,7 +1753,7 @@ def cancel_meeting(meeting_id):
         attendees = meeting["invites"].split(",") if meeting["invites"] else []
         if attendees:
             to_field = ", ".join(attendees)
-            send_plain_email(to_field, subject, body)
+            send_html_email(to_field, subject, body)
             flash("📧 Cancellation email sent to all attendees.", "info")
 
     # Delete record
@@ -1854,7 +1863,7 @@ def respond_meeting(reservation_id):
             f""
         )
 
-        send_plain_email(reservation["requester_email"], subject_line, body_requester)
+        send_html_email(reservation["requester_email"], subject_line, body_requester)
 
         # Calendar event (optional)
         try:
@@ -1892,7 +1901,7 @@ def respond_meeting(reservation_id):
             f""
         )
 
-        send_plain_email(reservation["requester_email"], subject_line, body_requester)
+        send_html_email(reservation["requester_email"], subject_line, body_requester)
 
         return """
         <h2>Meeting Rejected</h2>
