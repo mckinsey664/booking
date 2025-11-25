@@ -184,6 +184,10 @@ def admin_required(f):
 
 @app.route("/", methods=["GET", "POST"])
 def login():
+    # clear old flashes on GET
+    if request.method == "GET":
+        session.pop('_flashes', None)
+
     if request.method == "POST":
         email = request.form["email"].strip().lower()
 
