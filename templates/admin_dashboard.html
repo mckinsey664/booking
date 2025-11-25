@@ -110,8 +110,6 @@
     <a href="{{ url_for('admin_users') }}" class="{% if request.endpoint == 'admin_users' %}active{% endif %}">Users</a>
     <a href="{{ url_for('admin_approved_users') }}" class="{% if request.endpoint == 'admin_approved_users' %}active{% endif %}">Approved Users</a>
     <a href="{{ url_for('admin_rooms') }}" class="{% if request.endpoint == 'admin_rooms' %}active{% endif %}">Rooms</a>
-    <a href="{{ url_for('admin_companies') }}" class="{% if request.endpoint == 'admin_companies' %}active{% endif %}">Companies</a>
-    <a href="{{ url_for('admin_company_slots') }}" class="{% if request.endpoint == 'admin_company_slots' %}active{% endif %}">Company Slots</a>
     <a href="{{ url_for('admin_reservations') }}" class="{% if request.endpoint == 'admin_reservations' %}active{% endif %}">Reservations</a>
     <a href="{{ url_for('logout') }}" class="logout text-decoration-none">Logout</a>
   </div>
