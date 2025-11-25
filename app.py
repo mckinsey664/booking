@@ -503,38 +503,32 @@ def reserve():
 
 <p style="margin-top:0;">Dear {full_name},</p>
 
-  <p>You have received a new meeting request from <b>{requester_full_name}</b> .</p>
+<p>You have received a new meeting request from <b>{requester_full_name}</b>.</p>
 
-  <p><b>Date:</b> {pretty_date}<br>
-     <b>Time:</b> {pretty_time}<br>
-     <b>Meeting Room:</b> {free_room}<br>
-     <b>Requested by:</b> {email}</p>
+<p><b>Date:</b> {pretty_date}<br>
+<b>Time:</b> {pretty_time}<br>
+<b>Meeting Room:</b> {free_room}<br>
+<b>Requested by:</b> {email}</p>
 
-  <p>Please select one of the options below:</p>
+<p>Please select one of the options below:</p>
 
-  <div style="margin-top:15px;">
-    <a href="{approve_link}" 
-       style="padding:10px 18px;border:1px solid #ccc;
-              border-radius:4px;text-decoration:none;
-              color:#000;margin-right:10px;">
-      Confirm
-    </a>
+<div style="margin-top:15px;">
+  <a href="{approve_link}"
+     style="padding:10px 18px; border:1px solid #ccc; border-radius:4px;
+            text-decoration:none; color:#000; margin-right:10px;">
+    Confirm
+  </a>
 
-    <a href="{reject_link}" 
-       style="padding:10px 18px;border:1px solid #ccc;
-              border-radius:4px;text-decoration:none;
-              color:#000;">
-      Reject
-    </a>
-  </div>
-
-  <br><br>
-  <p style="color:#5f6368;font-size:12px;">
-    
-  </p>
+  <a href="{reject_link}"
+     style="padding:10px 18px; border:1px solid #ccc; border-radius:4px;
+            text-decoration:none; color:#000;">
+    Reject
+  </a>
+</div>
 
 </div>
 """
+
 
 
         send_html_email(target_email, subject_guest, html_guest)
