@@ -236,7 +236,8 @@ def login():
 
         msg = EmailMessage()
         msg["Subject"] = "Your verification code"
-        msg["From"] = sender_email
+        #msg["From"] = sender_email
+        msg["From"] = f"McKinsey Electronics <{SMTP_EMAIL}>"
         msg["To"] = email
         msg.set_content(f"Your verification code is: {code}")
 
@@ -574,7 +575,7 @@ def send_html_email(to_email, subject, html_body):
     try:
         msg = EmailMessage()
         msg["Subject"] = subject
-        msg["From"] = SMTP_EMAIL
+        msg["From"] = f"McKinsey Electronics <{SMTP_EMAIL}>"
         msg["To"] = to_email
         msg.add_alternative(html_body, subtype="html")
 
