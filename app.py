@@ -476,6 +476,8 @@ def reserve():
 
         send_html_email(email, subject_requester, body_requester)
 
+        
+
         # -----------------------------
         # EMAIL TO GUEST (HTML)
         # -----------------------------
@@ -487,8 +489,7 @@ def reserve():
 
   <p>Dear {full_name},</p>
 
-  <p>You have received a new meeting request from <b>{requester_full_name}</b> 
-     of <b>{selected_company}</b>.</p>
+  <p>You have received a new meeting request from <b>{requester_full_name}</b> .</p>
 
   <p><b>Date:</b> {pretty_date}<br>
      <b>Time:</b> {pretty_time}<br>
