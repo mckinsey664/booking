@@ -485,9 +485,9 @@ def reserve():
         # subject_guest = "New Meeting Request – Action Required"
 
         html_guest = f"""
-<div style='font-family:Arial,sans-serif;font-size:15px;color:#202124'>
+<div style="font-family:Tahoma, sans-serif; line-height:1.6; font-size:14px; margin:0; padding:0;">
 
-  <p>Dear {full_name},</p>
+<p style="margin-top:0;">Dear {full_name},</p>
 
   <p>You have received a new meeting request from <b>{requester_full_name}</b> .</p>
 
