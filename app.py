@@ -369,7 +369,7 @@ def reserve():
     people = []
     if selected_company:
         people = c.execute("""
-            SELECT id, first_name, last_name, email 
+            SELECT id, first_name, last_name, email ,position
             FROM approved_users
             WHERE company_name = ?
             ORDER BY first_name, last_name
