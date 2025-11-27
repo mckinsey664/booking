@@ -978,7 +978,7 @@ def admin_reservations():
                END AS entity_name
         FROM reservations r
         LEFT JOIN approved_users au ON r.user_id = au.id
-        ORDER BY r.date, r.start_time
+        ORDER BY r.date, r.start_time, r.room_name
     """).fetchall()
 
     return render_template("admin_reservations.html", reservations=reservations)
