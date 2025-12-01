@@ -275,6 +275,59 @@
 .search-dropdown div:hover {
   background: #444;
 }
+
+/* 🔘 Action buttons container */
+td form {
+    display: inline-block;
+    margin: 0 3px;
+}
+
+/* 🎯 Universal style for action buttons */
+.action-btn {
+    width: 36px;
+    height: 32px;
+    padding: 0;
+    border-radius: 6px;
+    font-size: 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s ease-in-out;
+}
+
+/* 🟥 Delete button styling */
+.btn-delete {
+    border: 1px solid #b62525 !important;
+    color: #ff6b6b !important;
+}
+.btn-delete:hover {
+    background: #b62525;
+    color: #fff !important;
+}
+
+/* 🟦 Done button */
+.btn-done {
+    border: 1px solid #0da7c2 !important;
+    color: #4ee3ff !important;
+}
+.btn-done:hover {
+    background: #0da7c2 !important;
+    color: #000 !important;
+}
+
+/* 🚫 Disabled Done */
+.btn-done:disabled {
+    opacity: 0.35 !important;
+    cursor: not-allowed !important;
+    border-color: #555 !important;
+    color: #888 !important;
+}
+
+/* ✨ Hover animation (both buttons) */
+.action-btn:hover {
+    transform: scale(1.07);
+}
+
 </style>
 
 
