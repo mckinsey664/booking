@@ -1092,16 +1092,15 @@ def import_from_sheet_to_db():
     return added
 @app.route("/auto_import", methods=["POST"])
 def auto_import():
-    # Optional security token to prevent abuse
-    expected_token = os.environ.get("IMPORT_TOKEN")
-    provided_token = request.headers.get("X-Import-Token")
-
-    if expected_token and expected_token != provided_token:
-        return {"status": "error", "message": "Unauthorized"}, 401
+    sheet_users = get_users_from_sheets2()
+    print("🔥 AUTO IMPORT — Sheet Users Count:", len(sheet_users))
 
     added = import_from_sheet_to_db()
+    print("🔥 AUTO IMPORT — Imported:", added)
 
-    return {"status": "success", "imported": added}, 200
+    return {"status": "success", 
+            "sheet_count": len(sheet_users),
+            "imported": added}, 200
 
 
 ################################################################################################
