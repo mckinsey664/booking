@@ -199,18 +199,24 @@
 </div>
 
 <style>
+  /* Make modal content the stacking root */
+.modal-content {
+  position: relative !important;
+  z-index: 3000 !important;
+}
+
+/* Ensure search dropdown appears on top */
 .search-dropdown {
   position: absolute;
-  top: 100%;
-  left: 0;
   background: #222;
   border: 1px solid #444;
   width: 100%;
   max-height: 200px;
   overflow-y: auto;
-  z-index: 2000;
+  z-index: 4000 !important;   /* ← higher than modal */
   border-radius: 5px;
 }
+
 .search-dropdown div {
   padding: 8px;
   cursor: pointer;
