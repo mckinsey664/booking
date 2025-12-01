@@ -967,6 +967,8 @@ def admin_reservations():
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
 
+    rooms = c.execute("SELECT name FROM rooms ORDER BY name").fetchall()
+
     reservations = c.execute("""
         SELECT r.*,
                au.first_name || ' ' || au.last_name AS booker_name,
@@ -981,52 +983,91 @@ def admin_reservations():
         ORDER BY r.date, r.start_time, r.room_name
     """).fetchall()
 
-    return render_template("admin_reservations.html", reservations=reservations)
+    return render_template("admin_reservations.html", reservations=reservations, rooms=rooms)
 
 #13- ADD RESERVATION MANUALLY
 
-@app.route("/admin/add_reservation", methods=["GET", "POST"])
+# @app.route("/admin/add_reservation", methods=["GET", "POST"])
+# @admin_required
+# def admin_add_reservation():
+#     conn = get_db()
+#     conn.row_factory = sqlite3.Row
+#     c = conn.cursor()
+
+#     # Load companies and rooms for dropdowns
+#     companies = c.execute("SELECT id, name FROM companies ORDER BY name").fetchall()
+#     rooms = c.execute("SELECT name FROM rooms ORDER BY name").fetchall()
+
+#     if request.method == "POST":
+#         company_id = request.form.get("company_id")
+#         date = request.form.get("date")
+#         time = request.form.get("time")
+#         room_name = request.form.get("room_name")
+#         invites = request.form.get("invites")
+
+#         # Validate inputs
+#         if not company_id or not date or not time or not room_name:
+#             flash("⚠️ Please fill all required fields.", "warning")
+#             return redirect(url_for("admin_add_reservation"))
+
+#         # Prevent double-booking same room and time
+#         existing = c.execute("""
+#             SELECT id FROM reservations WHERE date=? AND start_time=? AND room_name=?
+#         """, (date, time, room_name)).fetchone()
+#         if existing:
+#             flash("❌ This room is already booked for that time.", "danger")
+#             return redirect(url_for("admin_add_reservation"))
+
+#         # Insert into database
+#         c.execute("""
+#             INSERT INTO reservations (user_id, entity_type, entity_id, date, start_time, room_name, invites)
+#             VALUES (NULL, 'company', ?, ?, ?, ?, ?)
+#         """, (company_id, date, time, room_name, invites))
+#         conn.commit()
+
+#         flash("✅ Reservation added successfully!", "success")
+#         return redirect(url_for("admin_reservations"))
+
+#     return render_template("admin_add_reservation.html", companies=companies, rooms=rooms)
+
+@app.route("/admin/add_reservation", methods=["POST"])
 @admin_required
 def admin_add_reservation():
     conn = get_db()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
 
-    # Load companies and rooms for dropdowns
-    companies = c.execute("SELECT id, name FROM companies ORDER BY name").fetchall()
-    rooms = c.execute("SELECT name FROM rooms ORDER BY name").fetchall()
+    date = request.form.get("date")
+    start_time = request.form.get("start_time")
+    room_name = request.form.get("room_name")
+    requester_id = request.form.get("requester_id")
+    invitee_id = request.form.get("invitee_id")
 
-    if request.method == "POST":
-        company_id = request.form.get("company_id")
-        date = request.form.get("date")
-        time = request.form.get("time")
-        room_name = request.form.get("room_name")
-        invites = request.form.get("invites")
-
-        # Validate inputs
-        if not company_id or not date or not time or not room_name:
-            flash("⚠️ Please fill all required fields.", "warning")
-            return redirect(url_for("admin_add_reservation"))
-
-        # Prevent double-booking same room and time
-        existing = c.execute("""
-            SELECT id FROM reservations WHERE date=? AND start_time=? AND room_name=?
-        """, (date, time, room_name)).fetchone()
-        if existing:
-            flash("❌ This room is already booked for that time.", "danger")
-            return redirect(url_for("admin_add_reservation"))
-
-        # Insert into database
-        c.execute("""
-            INSERT INTO reservations (user_id, entity_type, entity_id, date, start_time, room_name, invites)
-            VALUES (NULL, 'company', ?, ?, ?, ?, ?)
-        """, (company_id, date, time, room_name, invites))
-        conn.commit()
-
-        flash("✅ Reservation added successfully!", "success")
+    # Validation
+    if not (date and start_time and room_name and requester_id and invitee_id):
+        flash("⚠️ Please fill all fields.", "warning")
         return redirect(url_for("admin_reservations"))
 
-    return render_template("admin_add_reservation.html", companies=companies, rooms=rooms)
+    # Prevent double booking of room
+    existing = c.execute("""
+        SELECT id FROM reservations
+        WHERE date=? AND start_time=? AND room_name=?
+    """, (date, start_time, room_name)).fetchone()
+
+    if existing:
+        flash("❌ This room is already booked at that time.", "danger")
+        return redirect(url_for("admin_reservations"))
+
+    # Insert reservation
+    c.execute("""
+        INSERT INTO reservations (user_id, entity_type, entity_id, date, start_time, room_name)
+        VALUES (?, 'person', ?, ?, ?, ?)
+    """, (requester_id, invitee_id, date, start_time, room_name))
+
+    conn.commit()
+    flash("✅ Reservation added successfully!", "success")
+    return redirect(url_for("admin_reservations"))
+
 
 #14- DELETE RESERVATION
 

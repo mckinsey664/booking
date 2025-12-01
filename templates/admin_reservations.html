@@ -125,67 +125,70 @@
   {% endif %}
 </div>
 <!-- 🟧 Add Reservation Modal -->
-<div class="modal fade" id="addReservationModal" tabindex="-1" aria-labelledby="addReservationModalLabel" aria-hidden="true">
+<div class="modal fade" id="addReservationModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content bg-dark text-white border-0">
-      
+
       <div class="modal-header border-0">
-        <h5 class="modal-title" id="addReservationModalLabel">Add New Reservation</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h5 class="modal-title">Add New Reservation</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
 
       <div class="modal-body">
         <form method="POST" action="{{ url_for('admin_add_reservation') }}">
+
           <div class="row g-3">
 
             <!-- DATE -->
             <div class="col-md-6">
               <label class="form-label text-white-50">Date</label>
-              <input type="date" name="date" class="form-control bg-dark text-white border-secondary" required>
+              <select name="date" class="form-select bg-dark text-white border-secondary" required>
+                <option value="">Select Date</option>
+                <option value="2025-12-09">December 9, 2025</option>
+                <option value="2025-12-10">December 10, 2025</option>
+              </select>
             </div>
 
-            <!-- TIME -->
+            <!-- START TIME -->
             <div class="col-md-6">
               <label class="form-label text-white-50">Start Time</label>
-              <input type="time" name="start_time" class="form-control bg-dark text-white border-secondary" required>
+              <input type="time" name="start_time" class="form-control bg-dark text-white border-secondary"
+                     required step="1800" min="10:00" max="16:00">
             </div>
 
             <!-- ROOM -->
             <div class="col-md-6">
               <label class="form-label text-white-50">Room</label>
-              <select name="room_id" class="form-select bg-dark text-white border-secondary" required>
+              <select name="room_name" class="form-select bg-dark text-white border-secondary" required>
                 <option value="">Select Room</option>
                 {% for room in rooms %}
-                  <option value="{{ room['id'] }}">{{ room['name'] }}</option>
+                  <option value="{{ room['name'] }}">{{ room['name'] }}</option>
                 {% endfor %}
               </select>
             </div>
 
-            <!-- REQUESTER (BOOKED BY) -->
-            <div class="col-md-6">
-              <label class="form-label text-white-50">Requester Email</label>
-              <input type="email" name="booked_by" class="form-control bg-dark text-white border-secondary" placeholder="email@domain.com" required>
+            <!-- REQUESTER (SEARCH) -->
+            <div class="col-md-6 position-relative">
+              <label class="form-label text-white-50">Requester</label>
+              <input type="text" id="requesterSearch" class="form-control bg-dark text-white border-secondary"
+                     placeholder="Search requester..." autocomplete="off">
+              <div id="requesterResults" class="search-dropdown"></div>
+              <input type="hidden" name="requester_id" id="requesterId">
             </div>
 
-            <!-- INVITEE NAME -->
-            <div class="col-md-6">
-              <label class="form-label text-white-50">Invitee Name</label>
-              <input type="text" name="entity_name" class="form-control bg-dark text-white border-secondary" placeholder="John Doe" required>
-            </div>
-
-            <!-- INVITEE TYPE -->
-            <div class="col-md-6">
-              <label class="form-label text-white-50">Invitee Type</label>
-              <select name="entity_type" class="form-select bg-dark text-white border-secondary" required>
-                <option value="company">Company</option>
-                <option value="person">Person</option>
-              </select>
+            <!-- INVITEE (SEARCH) -->
+            <div class="col-md-6 position-relative">
+              <label class="form-label text-white-50">Invitee</label>
+              <input type="text" id="inviteeSearch" class="form-control bg-dark text-white border-secondary"
+                     placeholder="Search invitee..." autocomplete="off">
+              <div id="inviteeResults" class="search-dropdown"></div>
+              <input type="hidden" name="invitee_id" id="inviteeId">
             </div>
 
           </div>
 
           <div class="mt-4 text-end">
-            <button type="submit" class="btn btn-brand text-white px-4">Save Reservation</button>
+            <button class="btn btn-brand text-white px-4">Save Reservation</button>
           </div>
 
         </form>
@@ -194,6 +197,29 @@
     </div>
   </div>
 </div>
+
+<style>
+.search-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #222;
+  border: 1px solid #444;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 2000;
+  border-radius: 5px;
+}
+.search-dropdown div {
+  padding: 8px;
+  cursor: pointer;
+  color: #fff;
+}
+.search-dropdown div:hover {
+  background: #444;
+}
+</style>
 
 
 <!-- 🎨 Custom Styling -->
@@ -256,5 +282,41 @@ document.addEventListener("DOMContentLoaded", function() {
 
 });
 </script>
+<script>
+function setupSearch(inputId, resultsId, hiddenFieldId) {
+    const input = document.getElementById(inputId);
+    const results = document.getElementById(resultsId);
+
+    input.addEventListener("input", () => {
+        const q = input.value.trim();
+        if (!q) {
+            results.innerHTML = "";
+            return;
+        }
+
+        fetch(`/search_entities?q=${encodeURIComponent(q)}`)
+            .then(r => r.json())
+            .then(data => {
+                results.innerHTML = "";
+                data.forEach(item => {
+                    if (item.type === "person") {
+                        const div = document.createElement("div");
+                        div.textContent = item.label;
+                        div.onclick = () => {
+                            input.value = item.label;
+                            document.getElementById(hiddenFieldId).value = item.id;
+                            results.innerHTML = "";
+                        };
+                        results.appendChild(div);
+                    }
+                });
+            });
+    });
+}
+
+setupSearch("requesterSearch", "requesterResults", "requesterId");
+setupSearch("inviteeSearch", "inviteeResults", "inviteeId");
+</script>
+
 
 {% endblock %}
