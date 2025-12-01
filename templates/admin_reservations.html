@@ -114,12 +114,14 @@
                   🗑
                 </button>
               </form>
-              <form action="{{ url_for('mark_done', reservation_id=r['id']) }}" method="post" class="d-inline">
-                <button class="btn btn-outline-info btn-sm px-3"
-                onclick="return confirm('Mark this reservation as done?');">
-                ✔
-                </button>
-              </form>
+<form action="{{ url_for('mark_done', reservation_id=r['id']) }}" method="post" class="d-inline">
+  <button class="btn btn-outline-info btn-sm px-3"
+          {% if r['status'] == 'Done' %}disabled style="opacity:0.4; cursor:not-allowed;"{% endif %}
+  >
+      ✔
+  </button>
+</form>
+
 
             </td>
 
