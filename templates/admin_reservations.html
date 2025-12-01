@@ -300,7 +300,7 @@ function setupSearch(inputId, resultsId, hiddenFieldId) {
             return;
         }
 
-        fetch(`/search_entities?q=${encodeURIComponent(q)}`)
+        fetch("{{ url_for('search_entities') }}?q=" + encodeURIComponent(q))
             .then(r => r.json())
             .then(data => {
                 results.innerHTML = "";
