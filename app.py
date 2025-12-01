@@ -1054,6 +1054,54 @@ def mark_done(reservation_id):
     flash("✅ Reservation marked as done!", "success")
     return redirect(url_for("admin_reservations"))
 
+#automatically approve
+def import_from_sheet_to_db():
+    conn = get_db()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+
+    sheet_users = get_users_from_sheets2()
+    added = 0
+
+    for u in sheet_users:
+        try:
+            c.execute("""
+                INSERT INTO approved_users
+                (first_name,last_name,email,company_name,position,phone,
+                 passport_number,passport_place,passport_expiry,birth_date)
+                VALUES (?,?,?,?,?,?,?,?,?,?)
+            """, (
+                u.get("First name"),
+                u.get("Last name"),
+                u.get("Email"),
+                u.get("Company name"),
+                u.get("Position"),
+                u.get("Phone"),
+                u.get("Passport Number"),
+                u.get("Passport Place of Issuance"),
+                u.get("Passport Expiry Date"),
+                u.get("Birth Date")
+            ))
+            added += 1
+        except sqlite3.IntegrityError:
+            pass  # skip duplicates
+
+    conn.commit()
+    conn.close()
+
+    return added
+@app.route("/auto_import", methods=["POST"])
+def auto_import():
+    # Optional security token to prevent abuse
+    expected_token = os.environ.get("IMPORT_TOKEN")
+    provided_token = request.headers.get("X-Import-Token")
+
+    if expected_token and expected_token != provided_token:
+        return {"status": "error", "message": "Unauthorized"}, 401
+
+    added = import_from_sheet_to_db()
+
+    return {"status": "success", "imported": added}, 200
 
 
 ################################################################################################
