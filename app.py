@@ -1041,6 +1041,18 @@ def delete_reservation(reservation_id):
     flash("🗑️ Reservation deleted successfully!", "success")
     return redirect(url_for("admin_reservations"))
 
+# 15 - mark as done
+@app.route("/admin/reservations/<int:reservation_id>/done", methods=["POST"])
+@admin_required
+def mark_done(reservation_id):
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute("UPDATE reservations SET status='Done' WHERE id=?", (reservation_id,))
+    conn.commit()
+
+    flash("✅ Reservation marked as done!", "success")
+    return redirect(url_for("admin_reservations"))
 
 
 

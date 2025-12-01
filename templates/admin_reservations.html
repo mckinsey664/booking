@@ -92,12 +92,18 @@
             <!-- 🔵 STATUS -->
             <td>
               {% if r['status'] == 'Approved' %}
-                <span class="badge bg-success px-3 py-2">Confirmed</span>
-              {% elif r['status'] == 'Rejected' %}
-                <span class="badge bg-danger px-3 py-2">Declined</span>
-              {% else %}
-                <span class="badge bg-warning text-dark px-3 py-2">Pending</span>
-              {% endif %}
+  <span class="badge bg-success px-3 py-2">Confirmed</span>
+
+{% elif r['status'] == 'Rejected' %}
+  <span class="badge bg-danger px-3 py-2">Declined</span>
+
+{% elif r['status'] == 'Done' %}
+  <span class="badge bg-info text-dark px-3 py-2">Done</span>
+
+{% else %}
+  <span class="badge bg-warning text-dark px-3 py-2">Pending</span>
+{% endif %}
+
             </td>
 
             <!-- 🗑 DELETE -->
@@ -108,6 +114,13 @@
                   🗑
                 </button>
               </form>
+              <form action="{{ url_for('mark_done', reservation_id=r['id']) }}" method="post" class="d-inline">
+                <button class="btn btn-outline-info btn-sm px-3"
+                onclick="return confirm('Mark this reservation as done?');">
+                ✔
+                </button>
+              </form>
+
             </td>
 
           </tr>
