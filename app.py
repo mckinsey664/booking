@@ -1672,7 +1672,6 @@ def logout():
 
 
 @app.route("/search_entities")
-@verified_required
 def search_entities():
     q = request.args.get("q", "").strip().lower()
     conn = get_db()

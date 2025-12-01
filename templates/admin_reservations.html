@@ -289,40 +289,62 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 <script>
-function setupSearch(inputId, resultsId, hiddenFieldId) {
-    const input = document.getElementById(inputId);
-    const results = document.getElementById(resultsId);
+document.addEventListener("DOMContentLoaded", function () {
 
-    input.addEventListener("input", () => {
-        const q = input.value.trim();
-        if (!q) {
-            results.innerHTML = "";
+    function setupSearch(inputId, resultsId, hiddenFieldId) {
+        const input = document.getElementById(inputId);
+        const results = document.getElementById(resultsId);
+
+        if (!input) {
+            console.log("❌ ERROR: Input field " + inputId + " not found.");
             return;
         }
 
-        fetch("{{ url_for('search_entities') }}?q=" + encodeURIComponent(q))
-            .then(r => r.json())
-            .then(data => {
+        input.addEventListener("input", function () {
+            const q = input.value.trim();
+            if (!q) {
                 results.innerHTML = "";
-                data.forEach(item => {
-                    if (item.type === "person") {
-                        const div = document.createElement("div");
-                        div.textContent = item.label;
-                        div.onclick = () => {
-                            input.value = item.label;
-                            document.getElementById(hiddenFieldId).value = item.id;
-                            results.innerHTML = "";
-                        };
-                        results.appendChild(div);
-                    }
-                });
-            });
-    });
-}
+                return;
+            }
 
-setupSearch("requesterSearch", "requesterResults", "requesterId");
-setupSearch("inviteeSearch", "inviteeResults", "inviteeId");
+            fetch("/search_entities?q=" + encodeURIComponent(q))
+                .then(response => response.json())
+                .then(data => {
+                    results.innerHTML = "";
+                    data.forEach(item => {
+                        if (item.type === "person") {
+                            const div = document.createElement("div");
+                            div.textContent = item.label;
+                            div.classList.add("dropdown-item-result");
+                            div.onclick = () => {
+                                input.value = item.label;
+                                document.getElementById(hiddenFieldId).value = item.id;
+                                results.innerHTML = "";
+                            };
+                            results.appendChild(div);
+                        }
+                    });
+                })
+                .catch(err => console.error("Fetch error:", err));
+        });
+    }
+
+    setupSearch("requesterSearch", "requesterResults", "requesterId");
+    setupSearch("inviteeSearch", "inviteeResults", "inviteeId");
+
+});
 </script>
+
+<style>
+.dropdown-item-result {
+  padding: 8px;
+  color: white;
+  cursor: pointer;
+}
+.dropdown-item-result:hover {
+  background: #444;
+}
+</style>
 
 
 {% endblock %}
