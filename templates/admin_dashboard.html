@@ -190,6 +190,12 @@
       <p>Manage all rooms, companies, users, and reservations from this control panel.</p>
       {% endblock %}
   </div>
+<script>
+document.getElementById("menuToggle").addEventListener("click", function() {
+    const sidebar = document.getElementById("sidebarMenu");
+    sidebar.classList.toggle("show");
+});
+</script>
 
 </body>
 </html>
