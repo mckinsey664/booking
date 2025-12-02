@@ -101,7 +101,7 @@
     }
 
 
-/* 📱 MOBILE FIX — sidebar becomes full-width and stacked */
+/* 📱 MOBILE FIX — clean compact stacked menu */
 @media (max-width: 768px) {
 
   body {
@@ -110,29 +110,38 @@
     overflow: auto;
   }
 
-  /* Sidebar becomes top menu */
+  /* Sidebar becomes compact top menu */
   .sidebar {
     width: 100%;
     height: auto;
-    padding: 15px 0;
-    display: block;                 /* Stack vertically */
+    padding: 10px 0 0 0;
+    display: block;
     text-align: center;
     border-right: none;
     border-bottom: 1px solid #222;
   }
 
+  /* Smaller logo */
   .sidebar img.logo {
-    max-width: 120px;
-    margin: 0 auto 15px auto;
+    max-width: 90px;
+    margin: 0 auto 8px auto;
     display: block;
   }
 
+  /* Compact menu items */
   .sidebar a {
-    display: block;                 /* Full-width buttons */
+    display: block;
     width: 100%;
-    padding: 14px 0;
-    font-size: 16px;
-    border-bottom: 1px solid #222;  /* Separate lines */
+    padding: 10px 0;           /* smaller vertical padding */
+    font-size: 14px;           /* smaller text size */
+    border-bottom: 1px solid #222;
+    text-align: center;
+  }
+
+  /* Active link slim highlight */
+  .sidebar a.active {
+    background-color: #CF6000;
+    padding: 10px 0;
   }
 
   .sidebar a:last-child {
@@ -141,13 +150,12 @@
 
   .logout {
     width: 100%;
-    margin-top: 10px;
-    border-radius: 0;
+    padding: 10px 0;
   }
 
-  /* Content becomes normal flow */
+  /* Content spacing for mobile */
   .content {
-    padding: 20px;
+    padding: 18px;
     width: 100%;
     overflow-y: visible;
   }
