@@ -99,6 +99,59 @@
     .btn-brand:hover {
       background-color: #b85100;
     }
+
+    /* 📱 MOBILE FIX */
+@media (max-width: 768px) {
+
+  body {
+    flex-direction: column;
+    height: auto;
+    overflow: auto;
+  }
+
+  /* Sidebar becomes a top nav */
+  .sidebar {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    justify-content: start;
+    align-items: center;
+    padding: 10px;
+    overflow-x: auto;
+    white-space: nowrap;
+    border-right: none;
+    border-bottom: 1px solid #222;
+  }
+
+  .sidebar img.logo {
+    max-width: 90px;
+    margin: 0 15px 0 5px;
+  }
+
+  .sidebar a {
+    display: inline-block;
+    padding: 10px 14px;
+    font-size: 14px;
+    text-align: center;
+    width: auto;
+  }
+
+  .logout {
+    margin-top: 0;
+    margin-left: auto;
+    width: auto;
+    padding: 10px 14px;
+    white-space: nowrap;
+  }
+
+  /* Content becomes full width */
+  .content {
+    padding: 20px;
+    width: 100%;
+    overflow-y: visible;
+  }
+}
+
   </style>
 </head>
 <body>
