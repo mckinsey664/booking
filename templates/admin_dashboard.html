@@ -100,74 +100,80 @@
       background-color: #b85100;
     }
 
+/* 🔥 HAMBURGER NAVIGATION (mobile only) */
+.mobile-topbar {
+  width: 100%;
+  background: #111;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #222;
+}
 
-/* 📱 MOBILE FIX — clean compact stacked menu */
+.hamburger-btn {
+  background: none;
+  border: none;
+  font-size: 26px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.mobile-logo {
+  max-width: 110px;
+}
+
+/* Hide sidebar on mobile initially */
 @media (max-width: 768px) {
-
-  body {
-    flex-direction: column;
-    height: auto;
-    overflow: auto;
-  }
-
-  /* Sidebar becomes compact top menu */
   .sidebar {
-    width: 100%;
-    height: auto;
-    padding: 10px 0 0 0;
-    display: block;
-    text-align: center;
+    display: none;              /* hidden at first */
+    width: 100% !important;
+    padding-top: 0;
     border-right: none;
     border-bottom: 1px solid #222;
   }
 
-  /* Smaller logo */
+  .sidebar.show {
+    display: block;             /* shown when hamburger clicked */
+  }
+
   .sidebar img.logo {
-    max-width: 90px;
-    margin: 0 auto 8px auto;
+    max-width: 130px;
+    margin: 15px auto;
     display: block;
   }
 
-  /* Compact menu items */
   .sidebar a {
-    display: block;
-    width: 100%;
-    padding: 10px 0;           /* smaller vertical padding */
-    font-size: 14px;           /* smaller text size */
+    text-align: center !important;
+    padding: 13px 0 !important;
+    font-size: 15px;
     border-bottom: 1px solid #222;
-    text-align: center;
-  }
-
-  /* Active link slim highlight */
-  .sidebar a.active {
-    background-color: #CF6000;
-    padding: 10px 0;
-  }
-
-  .sidebar a:last-child {
-    border-bottom: none;
   }
 
   .logout {
-    width: 100%;
-    padding: 10px 0;
+    border-radius: 0;
   }
 
-  /* Content spacing for mobile */
+  /* Content spacing below topbar */
   .content {
-    padding: 18px;
-    width: 100%;
-    overflow-y: visible;
+    padding: 20px;
   }
 }
+
 
 
   </style>
 </head>
 <body>
+<!-- MOBILE TOP BAR -->
+<div class="mobile-topbar d-md-none">
+  <button id="menuToggle" class="hamburger-btn">☰</button>
+  <img src="{{ url_for('static', filename='logo.png') }}" class="mobile-logo">
+</div>
 
   <!-- Sidebar -->
-  <div class="sidebar">
+  <div class="sidebar" id="sidebarMenu">
+
     <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
 
     <a href="{{ url_for('admin_users') }}" class="{% if request.endpoint == 'admin_users' %}active{% endif %}">Users</a>
