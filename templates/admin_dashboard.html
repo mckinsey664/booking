@@ -100,7 +100,8 @@
       background-color: #b85100;
     }
 
-    /* 📱 MOBILE FIX */
+
+/* 📱 MOBILE FIX — sidebar becomes full-width and stacked */
 @media (max-width: 768px) {
 
   body {
@@ -109,48 +110,49 @@
     overflow: auto;
   }
 
-  /* Sidebar becomes a top nav */
+  /* Sidebar becomes top menu */
   .sidebar {
     width: 100%;
     height: auto;
-    flex-direction: row;
-    justify-content: start;
-    align-items: center;
-    padding: 10px;
-    overflow-x: auto;
-    white-space: nowrap;
+    padding: 15px 0;
+    display: block;                 /* Stack vertically */
+    text-align: center;
     border-right: none;
     border-bottom: 1px solid #222;
   }
 
   .sidebar img.logo {
-    max-width: 90px;
-    margin: 0 15px 0 5px;
+    max-width: 120px;
+    margin: 0 auto 15px auto;
+    display: block;
   }
 
   .sidebar a {
-    display: inline-block;
-    padding: 10px 14px;
-    font-size: 14px;
-    text-align: center;
-    width: auto;
+    display: block;                 /* Full-width buttons */
+    width: 100%;
+    padding: 14px 0;
+    font-size: 16px;
+    border-bottom: 1px solid #222;  /* Separate lines */
+  }
+
+  .sidebar a:last-child {
+    border-bottom: none;
   }
 
   .logout {
-    margin-top: 0;
-    margin-left: auto;
-    width: auto;
-    padding: 10px 14px;
-    white-space: nowrap;
+    width: 100%;
+    margin-top: 10px;
+    border-radius: 0;
   }
 
-  /* Content becomes full width */
+  /* Content becomes normal flow */
   .content {
     padding: 20px;
     width: 100%;
     overflow-y: visible;
   }
 }
+
 
   </style>
 </head>
