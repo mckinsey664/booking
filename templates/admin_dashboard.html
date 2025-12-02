@@ -123,26 +123,37 @@
   max-width: 110px;
 }
 
-/* Hide sidebar on mobile initially */
 @media (max-width: 768px) {
+
+  /* FIX MAIN STRUCTURE */
+  body {
+    display: block !important;
+    height: auto !important;
+    overflow: auto !important;
+  }
+
+  /* SIDEBAR (HIDDEN BY DEFAULT) */
   .sidebar {
-    display: none;              /* hidden at first */
+    display: none;
     width: 100% !important;
     padding-top: 0;
     border-right: none;
     border-bottom: 1px solid #222;
   }
 
+  /* SHOW SIDEBAR WHEN TOGGLED */
   .sidebar.show {
-    display: block;             /* shown when hamburger clicked */
+    display: block;
   }
 
+  /* LOGO INSIDE EXPANDED MENU */
   .sidebar img.logo {
     max-width: 130px;
     margin: 15px auto;
     display: block;
   }
 
+  /* MENU BUTTONS */
   .sidebar a {
     text-align: center !important;
     padding: 13px 0 !important;
@@ -154,11 +165,14 @@
     border-radius: 0;
   }
 
-  /* Content spacing below topbar */
+  /* CONTENT */
   .content {
-    padding: 20px;
+    padding: 20px !important;
+    width: 100% !important;
+    margin-top: 10px !important; /* Prevent overlap */
   }
 }
+
 
 
 
