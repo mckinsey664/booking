@@ -67,62 +67,60 @@
           <tr class="align-middle text-center">
 
             <!-- 📅 DATE -->
-            <td class="text-white fw-semibold">{{ r['date'] }}</td>
+            <td data-label="Meeting Date" class="text-white fw-semibold">{{ r['date'] }}</td>
 
             <!-- ⏰ TIME -->
-            <td>
+            <td data-label="Meeting Time">
               <span class="badge bg-secondary fs-6 px-3 py-2">{{ r['start_time'] }}</span>
             </td>
 
             <!-- 🏠 ROOM -->
-            <td>
+            <td data-label="Room">
               <span class="badge bg-brand text-white fs-6 px-3 py-2">{{ r['room_name'] }}</span>
             </td>
 
             <!-- 👤 REQUESTER -->
-            <td class="text-white">
+            <td data-label="Requester" class="text-white">
               {{ r['booker_name'] }}
             </td>
 
             <!-- 👤 INVITEE -->
-            <td class="text-white">
+            <td data-label="Invitee" class="text-white">
               {{ r['entity_name'] }}
             </td>
 
             <!-- 🔵 STATUS -->
-            <td>
+            <td data-label="Status">
               {% if r['status'] == 'Approved' %}
-  <span class="badge bg-success px-3 py-2">Confirmed</span>
+              <span class="badge bg-success px-3 py-2">Confirmed</span>
 
-{% elif r['status'] == 'Rejected' %}
-  <span class="badge bg-danger px-3 py-2">Declined</span>
+              {% elif r['status'] == 'Rejected' %}
+              <span class="badge bg-danger px-3 py-2">Declined</span>
 
-{% elif r['status'] == 'Done' %}
-  <span class="badge bg-info text-dark px-3 py-2">Done</span>
+              {% elif r['status'] == 'Done' %}
+              <span class="badge bg-info text-dark px-3 py-2">Done</span>
 
-{% else %}
-  <span class="badge bg-warning text-dark px-3 py-2">Pending</span>
-{% endif %}
+              {% else %}
+              <span class="badge bg-warning text-dark px-3 py-2">Pending</span>
+              {% endif %}
 
             </td>
 
             <!-- 🗑 DELETE -->
-            <td>
+            <td data-label="Actions">
               <form action="{{ url_for('delete_reservation', reservation_id=r['id']) }}" method="post" class="d-inline">
                 <button type="submit" class="action-btn btn-delete"
                         onclick="return confirm('Are you sure you want to delete this reservation?');">
                   🗑
                 </button>
               </form>
-<form action="{{ url_for('mark_done', reservation_id=r['id']) }}" method="post" class="d-inline">
-  <button class="action-btn btn-done"
-          {% if r['status'] == 'Done' %}disabled style="opacity:0.4; cursor:not-allowed;"{% endif %}
-  >
-      ✔
-  </button>
-</form>
-
-
+              <form action="{{ url_for('mark_done', reservation_id=r['id']) }}" method="post" class="d-inline">
+                <button class="action-btn btn-done"
+                  {% if r['status'] == 'Done' %}disabled style="opacity:0.4; cursor:not-allowed;"{% endif %}
+                  >
+                  ✔
+                  </button>
+              </form>
             </td>
 
           </tr>
@@ -326,6 +324,56 @@ td form {
 /* ✨ Hover animation (both buttons) */
 .action-btn:hover {
     transform: scale(1.07);
+}
+/* 📱 MAKE TABLE RESPONSIVE ON MOBILE (NO HORIZONTAL SCROLL) */
+@media (max-width: 768px) {
+
+  /* Hide table header */
+  table.table-dark thead {
+    display: none;
+  }
+
+  /* Each row becomes a block card */
+  table.table-dark tbody tr {
+    display: block;
+    margin-bottom: 15px;
+    background: #111;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: left !important;
+  }
+
+  /* Cells become 2-column layout: label + value */
+  table.table-dark tbody tr td {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border: none !important;
+    font-size: 14px;
+    white-space: normal !important;
+  }
+
+  /* Labels shown before each value */
+  table.table-dark tbody tr td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #CF6000;
+    margin-right: 10px;
+    flex-shrink: 0;
+  }
+
+  /* Badges shrink nicely */
+  .badge {
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+  }
+
+  /* Buttons resize */
+  .action-btn {
+    width: 34px !important;
+    height: 30px !important;
+    font-size: 14px !important;
+  }
 }
 
 </style>
