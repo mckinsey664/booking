@@ -1919,6 +1919,13 @@ def respond_meeting(reservation_id):
 
     if not reservation:
         return "Reservation not found.", 404
+    
+    if reservation["status"] == "Approved":
+        return """
+        <h2>Meeting Already Approved</h2>
+        <p>This meeting was already confirmed earlier. No additional action is needed.</p>
+        """
+
 
     # Prepare times
     start_dt = datetime.strptime(f"{reservation['date']} {reservation['start_time']}", "%Y-%m-%d %H:%M")
