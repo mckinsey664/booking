@@ -628,7 +628,7 @@ def build_invitation_subject(date_str, start_time, end_time):
 @app.route("/admin/edit_approved_user/<int:user_id>", methods=["GET", "POST"])
 def edit_approved_user(user_id):
     # Only admin
-    if session.get("email") != "lynn.m@mckinsey-electronics.com":
+    if session.get("email") != "admin@mckinsey-electronics.com":
         return redirect(url_for("login"))
 
     conn = get_db()
