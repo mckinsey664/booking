@@ -346,7 +346,7 @@ def reserve():
     "Viking Tech Europe",
     "WAGO Middle East FZC",
     "Wurth Elektronik eiSos GmbH & Co. KG",
-    "BPM",
+    "BPM Microsystems",
     "McKinsey Electronics",
     "Qorvo"
     ]
