@@ -64,7 +64,7 @@
         <td>{{ u['birth_date'] or '-' }}</td>
         <td>{{ u['created_date'] }}</td>
         <td>
-          <a href="{{ url_for('edit_approved_user', user_id=user['id']) }}"
+          <a href="{{ url_for('edit_approved_user', user_id=u['id']) }}"
           class="btn btn-warning btn-sm">
           Edit
           </a>
