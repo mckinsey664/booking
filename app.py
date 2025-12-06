@@ -625,6 +625,48 @@ def build_invitation_subject(date_str, start_time, end_time):
         f"{weekday} {month} {day}, {year} {pretty_start} - {pretty_end} (GMT+4)"
     )
 
+@app.route("/admin/edit_approved_user/<int:user_id>", methods=["GET", "POST"])
+def edit_approved_user(user_id):
+    # Only admin
+    if session.get("email") != "lynn.m@mckinsey-electronics.com":
+        return redirect(url_for("login"))
+
+    conn = get_db()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+
+    # Load user data
+    user = c.execute("SELECT * FROM approved_users WHERE id=?", (user_id,)).fetchone()
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for("admin_approved_users"))
+
+    if request.method == "POST":
+        first = request.form.get("first_name")
+        last = request.form.get("last_name")
+        email = request.form.get("email")
+        company = request.form.get("company_name")
+        position = request.form.get("position")
+        phone = request.form.get("phone")
+        passport = request.form.get("passport_number")
+        place = request.form.get("passport_place")
+        expiry = request.form.get("passport_expiry")
+        birth = request.form.get("birth_date")
+
+        c.execute("""
+            UPDATE approved_users
+            SET first_name=?, last_name=?, email=?, company_name=?, position=?,
+                phone=?, passport_number=?, passport_place=?, passport_expiry=?, birth_date=?
+            WHERE id=?
+        """, (first, last, email, company, position, phone, passport, place, expiry, birth, user_id))
+
+        conn.commit()
+        flash("✅ User updated successfully!", "success")
+        return redirect(url_for("admin_approved_users"))
+
+    return render_template("edit_approved_user.html", user=user)
+
+
 ################################################################################################
 
 ############################################## ADMIN ###########################################

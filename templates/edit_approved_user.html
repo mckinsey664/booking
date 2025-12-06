@@ -1,0 +1,64 @@
+{% extends "admin_dashboard.html" %}
+{% block content %}
+
+<h2 class="mb-4">Edit Approved User</h2>
+
+<form method="POST" class="card p-4 bg-dark text-white">
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <label>First Name</label>
+      <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}" required>
+    </div>
+
+    <div class="col-md-6 mb-3">
+      <label>Last Name</label>
+      <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}" required>
+    </div>
+
+    <div class="col-md-6 mb-3">
+      <label>Email</label>
+      <input type="email" name="email" class="form-control" value="{{ user.email }}" required>
+    </div>
+
+    <div class="col-md-6 mb-3">
+      <label>Company</label>
+      <input type="text" name="company_name" class="form-control" value="{{ user.company_name }}">
+    </div>
+
+    <div class="col-md-6 mb-3">
+      <label>Position</label>
+      <input type="text" name="position" class="form-control" value="{{ user.position }}">
+    </div>
+
+    <div class="col-md-6 mb-3">
+      <label>Phone</label>
+      <input type="text" name="phone" class="form-control" value="{{ user.phone }}">
+    </div>
+
+    <div class="col-md-6 mb-3">
+      <label>Passport Number</label>
+      <input type="text" name="passport_number" class="form-control" value="{{ user.passport_number }}">
+    </div>
+
+    <div class="col-md-6 mb-3">
+      <label>Place of Issuance</label>
+      <input type="text" name="passport_place" class="form-control" value="{{ user.passport_place }}">
+    </div>
+
+    <div class="col-md-6 mb-3">
+      <label>Passport Expiry</label>
+      <input type="text" name="passport_expiry" class="form-control" value="{{ user.passport_expiry }}">
+    </div>
+
+    <div class="col-md-6 mb-3">
+      <label>Birth Date</label>
+      <input type="text" name="birth_date" class="form-control" value="{{ user.birth_date }}">
+    </div>
+  </div>
+
+  <button class="btn btn-success w-100 mt-3">Save Changes</button>
+
+  <a href="{{ url_for('admin_approved_users') }}" class="btn btn-secondary w-100 mt-2">Back</a>
+</form>
+
+{% endblock %}
