@@ -76,7 +76,10 @@
 
             <!-- 🏠 ROOM -->
             <td data-label="Room">
-              <span class="badge bg-brand text-white fs-6 px-3 py-2">{{ r['room_name'] }}</span>
+              <!-- <span class="badge bg-brand text-white fs-6 px-3 py-2">{{ r['room_name'] }}</span> -->
+              <span class="badge bg-brand text-white fs-6 px-3 py-2">
+                {{ r['room_name'].split('-')[1].strip() }}
+              </span>
             </td>
 
             <!-- 👤 REQUESTER -->
