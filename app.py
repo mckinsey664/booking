@@ -2076,25 +2076,16 @@ from flask import send_file
 import io
 
 @app.route("/admin/export_meetings_excel")
+@admin_required
 def export_meetings_excel():
-
-    # 🔒 Admin-only
-    if session.get("email") != ADMIN_EMAIL:
-        abort(403)
 
     conn = get_db()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
 
     meetings = c.execute("""
-        SELECT r.id,
-               r.date,
-               r.start_time,
-               r.room_name,
-               r.invites,
-               r.entity_type,
+        SELECT r.*,
                au.first_name || ' ' || au.last_name AS booker_name,
-               au.email AS booker_email,
                CASE
                  WHEN r.entity_type='company'
                    THEN (SELECT name FROM companies WHERE id = r.entity_id)
@@ -2105,54 +2096,60 @@ def export_meetings_excel():
                END AS entity_name
         FROM reservations r
         LEFT JOIN approved_users au ON r.user_id = au.id
-        ORDER BY r.date, r.start_time
+        ORDER BY r.date, r.start_time, r.room_name
     """).fetchall()
 
     conn.close()
 
-    # 📊 Create Excel
     wb = Workbook()
     ws = wb.active
-    ws.title = "Meetings"
+    ws.title = "Reservations"
 
-    # Header
+    # ✅ SAME HEADERS AS HTML
     ws.append([
-        "Meeting ID",
-        "Date",
-        "Start Time",
-        "Entity Type",
-        "Company / Person",
-        "Room",
-        "Booked By",
-        "Booker Email",
-        "Invited Emails"
+        "Meeting Date",
+        "Meeting Time",
+        "Room Nb",
+        "Requester Name",
+        "Invitee Name",
+        "Status"
     ])
 
-    # Rows
-    for m in meetings:
+    for r in meetings:
+
+        # 🏠 SAME ROOM FORMAT AS HTML
+        room_short = r["room_name"].split("-")[1].strip() if "-" in r["room_name"] else r["room_name"]
+
+        # 🔵 SAME STATUS LOGIC AS HTML
+        if r["status"] == "Approved":
+            status_label = "Confirmed"
+        elif r["status"] == "Rejected":
+            status_label = "Declined"
+        elif r["status"] == "Done":
+            status_label = "Done"
+        else:
+            status_label = "Pending"
+
         ws.append([
-            m["id"],
-            m["date"],
-            m["start_time"],
-            m["entity_type"].capitalize(),
-            m["entity_name"],
-            m["room_name"],
-            m["booker_name"],
-            m["booker_email"],
-            m["invites"]
+            r["date"],
+            r["start_time"],
+            room_short,
+            r["booker_name"],
+            r["entity_name"],
+            status_label
         ])
 
-    # Save to memory
     output = io.BytesIO()
     wb.save(output)
     output.seek(0)
 
     return send_file(
         output,
-        download_name="meetings_export.xlsx",
+        download_name="All_Reservations.xlsx",
         as_attachment=True,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
 
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=5000, debug=True)
