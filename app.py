@@ -2071,6 +2071,89 @@ from <b>{reservation['target_company']}</b> has been
         <p>The meeting has been declined and the requester has been notified.</p>
         """
 
+from openpyxl import Workbook
+from flask import send_file
+import io
+
+@app.route("/admin/export_meetings_excel")
+@verified_required
+def export_meetings_excel():
+
+    # 🔒 Admin-only
+    if session.get("email") != ADMIN_EMAIL:
+        abort(403)
+
+    conn = get_db()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+
+    meetings = c.execute("""
+        SELECT r.id,
+               r.date,
+               r.start_time,
+               r.room_name,
+               r.invites,
+               r.entity_type,
+               au.first_name || ' ' || au.last_name AS booker_name,
+               au.email AS booker_email,
+               CASE
+                 WHEN r.entity_type='company'
+                   THEN (SELECT name FROM companies WHERE id = r.entity_id)
+                 WHEN r.entity_type='person'
+                   THEN (SELECT first_name || ' ' || last_name
+                         FROM approved_users WHERE id = r.entity_id)
+                 ELSE 'Unknown'
+               END AS entity_name
+        FROM reservations r
+        LEFT JOIN approved_users au ON r.user_id = au.id
+        ORDER BY r.date, r.start_time
+    """).fetchall()
+
+    conn.close()
+
+    # 📊 Create Excel
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Meetings"
+
+    # Header
+    ws.append([
+        "Meeting ID",
+        "Date",
+        "Start Time",
+        "Entity Type",
+        "Company / Person",
+        "Room",
+        "Booked By",
+        "Booker Email",
+        "Invited Emails"
+    ])
+
+    # Rows
+    for m in meetings:
+        ws.append([
+            m["id"],
+            m["date"],
+            m["start_time"],
+            m["entity_type"].capitalize(),
+            m["entity_name"],
+            m["room_name"],
+            m["booker_name"],
+            m["booker_email"],
+            m["invites"]
+        ])
+
+    # Save to memory
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    return send_file(
+        output,
+        download_name="meetings_export.xlsx",
+        as_attachment=True,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=5000, debug=True)
