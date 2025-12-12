@@ -2076,7 +2076,6 @@ from flask import send_file
 import io
 
 @app.route("/admin/export_meetings_excel")
-@verified_required
 def export_meetings_excel():
 
     # 🔒 Admin-only
